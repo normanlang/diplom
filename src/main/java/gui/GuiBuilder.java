@@ -16,6 +16,8 @@ import javax.swing.JTree;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 
+import controller.OpenFile;
+
 import stadium.environment.Point;
 
 import java.awt.event.ActionListener;
@@ -32,21 +34,7 @@ public class GuiBuilder extends JFrame implements ActionListener{
 	private JMenuItem mntmOpenFile;
 	private Panel drawArea;
 	private ArrayList<Point> pArrayList;
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					GuiBuilder frame = new GuiBuilder();
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
+	
 
 	/**
 	 * Create the frame.
@@ -88,31 +76,8 @@ public class GuiBuilder extends JFrame implements ActionListener{
 		int retVal = fc.showOpenDialog(GuiBuilder.this);
 		if (retVal == JFileChooser.APPROVE_OPTION){
 			File file = fc.getSelectedFile();
-			BufferedReader br = null;
-			
-			try {
-				br = new BufferedReader(new FileReader(file));
-				String line = br.readLine();
-				while (line != null){
-					StringTokenizer strTok = new StringTokenizer(line, ";");
-					int x = Integer.parseInt(strTok.nextToken());
-					int y = Integer.parseInt(strTok.nextToken());
-					String type = strTok.nextToken(); 
-					int flow = Integer.parseInt(strTok.nextToken());
-					int capacity = Integer.parseInt(strTok.nextToken());
-					Point point = new Point(x, y, flow, capacity, type);
-					pal.add(point);
-					line = br.readLine();
-				}
-				
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			try{
-				   br.close(); 
-			} catch (Exception e){
-				e.printStackTrace();	
-				}
+			OpenFile of = new OpenFile(file);
+			pal = of.getValues();
 		}	
 		return pal;
 	}
