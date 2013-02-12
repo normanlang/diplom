@@ -42,6 +42,7 @@ public class OpenFile {
 		} catch (Exception e){
 			e.printStackTrace();	
 		}
+		//TODO: soll hier die Environment instanziert werden direkt mit den punkten?
 		return plist;
 	}
 }

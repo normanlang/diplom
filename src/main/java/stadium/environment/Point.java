@@ -1,5 +1,7 @@
 package stadium.environment;
 
+import java.util.ArrayList;
+
 
 
 /**
@@ -14,6 +16,7 @@ final public class Point extends java.awt.Point{
 	final private int x,y;
 	final private int flow, capacity;
 	final private String type;
+	final private int radius = 5;
 /**
  * @param x 
  * @param y
@@ -27,6 +30,7 @@ public Point(int x, int y, int f, int c, String t){
 		this.type = t;
 		this.x = x;
 		this.y = y;
+		this.setLocation(this.x, this.y);
 }
 
 	/**
@@ -50,6 +54,22 @@ public Point(int x, int y, int f, int c, String t){
 	public final int getFlow() {
 		return flow;
 	}
-	
+	public final int getRadius(){
+		return radius;
+	}
+	public final ArrayList<String> getAttributes(){
+		ArrayList<String> attributes = new ArrayList<String>();
+		attributes.add("type");
+		attributes.add(this.getType());
+		attributes.add("x");
+		attributes.add(String.valueOf(this.getX()));
+		attributes.add("y");
+		attributes.add(String.valueOf(this.getY()));
+		attributes.add("capacity");
+		attributes.add(String.valueOf(this.getCapacity()));
+		attributes.add("flow");
+		attributes.add(String.valueOf(this.getFlow()));
+		return attributes;
+	}
 	
 }
