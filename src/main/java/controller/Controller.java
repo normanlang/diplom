@@ -92,9 +92,8 @@ public class Controller implements IController{
 		java.awt.Point point = new java.awt.Point(e.getPoint());
 		if (pList!= null){
 			if (env.inCircle(point) != null){
-				System.out.println("Treffer");
 				gui.getInfoPanel().setNewInfos(env.inCircle(point));
-			} else System.out.println(" kein Treffer");
+			}
 		}
 		
 	}
