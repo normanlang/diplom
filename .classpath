@@ -32,5 +32,13 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="/media/data/eclipse-workspace/diplom/lib/geomason.1.5.jar"/>
+	<classpathentry kind="lib" path="/media/data/eclipse-workspace/diplom/lib/j3dcore.jar"/>
+	<classpathentry kind="lib" path="/media/data/eclipse-workspace/diplom/lib/j3dutils.jar"/>
+	<classpathentry kind="lib" path="/media/data/eclipse-workspace/diplom/lib/jfreechart-1.0.14.jar"/>
+	<classpathentry kind="lib" path="/media/data/eclipse-workspace/diplom/lib/jfreechart-1.0.14-swt.jar"/>
+	<classpathentry kind="lib" path="/media/data/eclipse-workspace/diplom/lib/jts-1.13.jar"/>
+	<classpathentry kind="lib" path="/media/data/eclipse-workspace/diplom/lib/mason.16.jar"/>
+	<classpathentry kind="lib" path="/media/data/eclipse-workspace/diplom/lib/vecmath.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
