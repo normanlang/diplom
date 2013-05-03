@@ -8,6 +8,7 @@ import com.vividsolutions.jts.geom.util.AffineTransformation;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.field.geo.GeomVectorField;
+import sim.util.Bag;
 
 public class Agent implements Steppable {
 
@@ -25,7 +26,7 @@ public class Agent implements Steppable {
 
     int direction;
     Point location = null;
-    double moveRate = 1.2;
+    double moveRate = 0.2;
      
     public Agent(int d){
         direction = d;
