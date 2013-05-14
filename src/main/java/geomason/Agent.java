@@ -5,6 +5,8 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.util.AffineTransformation;
+
+import ec.util.MersenneTwisterFast;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.field.geo.GeomVectorField;
@@ -24,14 +26,23 @@ public class Agent implements Steppable {
     final int NE = 7;
 
 
-    int direction;
-    Point location = null;
-    double moveRate = 0.2;
-     
+    public int direction;
+    public Point location = null;
+    public Point destination = null;
+    public double moveRate = 0.2;
+    public int weight;
+    private MersenneTwisterFast random;
+    
+    
+    public Agent(Point dest){
+        destination = dest;
+       	weight = calcWeight();
+    }
+    
     public Agent(int d){
         direction = d;
+       	weight = calcWeight();
     }
-            
     public void setLocation(Point p){ 
     	location = p; 
     }
@@ -41,8 +52,8 @@ public class Agent implements Steppable {
     }
     
     public void step(SimState state){            
-    	Stadium stadiumState = (Stadium)state; 
-        GeomVectorField accessableArea = stadiumState.movingSpace;
+    	PreussenStadiumModel preussenStadiumModelState = (PreussenStadiumModel)state; 
+        GeomVectorField accessableArea = preussenStadiumModelState.movingSpace;
         Coordinate coord = (Coordinate) location.getCoordinate().clone();
         AffineTransformation translate = null;
         switch (direction){
@@ -83,10 +94,25 @@ public class Agent implements Steppable {
                 coord.y -= moveRate;
                 break;
             }
-
-        if (accessableArea.isCovered(coord)){ 
+        
+        if (accessableArea.isCovered(coord)){
+        	Bag test = PreussenStadiumModel.agents.getObjectsWithinDistance(location, moveRate);
         	location.apply(translate);
         }
         else direction = state.random.nextInt(8);
+    }
+    
+    private int calcWeight(){
+    	int[] weightArray = new int[60];
+    	for (int i=0;i<weightArray.length;i++){
+    		weightArray[i] = 60+i;
+    	}
+    	random = new MersenneTwisterFast();
+    	return weightArray[random.nextInt(60)];
+    }
+    
+    private boolean isSomeoneThere(Coordinate c){
+    	
+    	return false;
     }
 }

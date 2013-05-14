@@ -10,18 +10,21 @@ import sim.engine.SimState;
 import sim.portrayal.geo.GeomPortrayal;
 import sim.portrayal.geo.GeomVectorFieldPortrayal;
 import sim.portrayal.simple.OvalPortrayal2D;
+import sim.util.Bag;
+import sim.util.geo.MasonGeometry;
 import sim.util.gui.SimpleColorMap;
 
-public class StadiumWithUI extends GUIState{
+public class PreussenStadiumWithUI extends GUIState{
     Display2D display;
     JFrame displayFrame;
     GeomVectorFieldPortrayal movingSpacePortrayal = new GeomVectorFieldPortrayal();
     GeomVectorFieldPortrayal agentPortrayal = new GeomVectorFieldPortrayal();
+    private Bag agentsBag;
 
     @Override
     public void init(Controller controller){
         super.init(controller);
-        display = new Display2D(Stadium.WIDTH, Stadium.HEIGHT, this);
+        display = new Display2D(PreussenStadiumModel.WIDTH, PreussenStadiumModel.HEIGHT, this);
         display.attach(movingSpacePortrayal, "Bewegungsraum");
         display.attach(agentPortrayal, "Agenten");
         displayFrame = display.createFrame();
@@ -30,12 +33,21 @@ public class StadiumWithUI extends GUIState{
     }
 
     private void setupPortrayals(){
-        Stadium stadiumState = (Stadium) state;
-        agentPortrayal.setField(Stadium.agents);
-        agentPortrayal.setPortrayalForAll(new OvalPortrayal2D(Color.RED, 4.0)); 
-        movingSpacePortrayal.setField(stadiumState.movingSpace);
-        movingSpacePortrayal.setPortrayalForAll(new GeomPortrayal(Color.GRAY,true));
+        PreussenStadiumModel preussenStadiumModelState = (PreussenStadiumModel) state;
 
+        agentPortrayal.setField(PreussenStadiumModel.agents);
+        agentPortrayal.setPortrayalForAll(new OvalPortrayal2D(Color.RED, 4.0)); 
+        agentPortrayal.setPortrayalForObject(agentPortrayal, new OvalPortrayal2D(Color.RED,4.0));
+        movingSpacePortrayal.setField(preussenStadiumModelState.movingSpace);
+        movingSpacePortrayal.setPortrayalForAll(new GeomPortrayal(Color.GRAY,true));
+        agentsBag = PreussenStadiumModel.agents.getGeometries();
+        /*agentPortrayal.setField(PreussenStadiumModel.agents);
+        while (!agentsBag.isEmpty()){
+        	MasonGeometry mg = (MasonGeometry) agentsBag.pop();
+        	double circleRadius = mg.getIntegerAttribute("weight")/32;
+        	OvalPortrayal2D o = new OvalPortrayal2D(Color.RED, circleRadius);
+        	agentPortrayal.setPortrayalForObject(mg, o);
+        } */     
         display.reset();
         display.setBackdrop(Color.WHITE);
         display.repaint();
@@ -59,16 +71,16 @@ public class StadiumWithUI extends GUIState{
     }
 
     public static void main(String[] args){
-        StadiumWithUI worldGUI = new StadiumWithUI();
-        Console console = new Console(worldGUI);
+        PreussenStadiumWithUI stadiumGUI = new PreussenStadiumWithUI();
+        Console console = new Console(stadiumGUI);
         console.setVisible(true);
     }
-    public StadiumWithUI(SimState state){
+    public PreussenStadiumWithUI(SimState state){
         super(state);
     }
 
-    public StadiumWithUI(){
-        super(new Stadium(System.currentTimeMillis()));
+    public PreussenStadiumWithUI(){
+        super(new PreussenStadiumModel(System.currentTimeMillis()));
     }
 
     public static String getName(){ 
