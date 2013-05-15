@@ -8,14 +8,17 @@ import sim.util.geo.MasonGeometry;
 import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.ArrayList;
-
-
 import com.vividsolutions.jts.geom.Point;
+import com.vividsolutions.jts.geom.util.AffineTransformation;
+
+import ec.util.MersenneTwisterFast;
 
 public class PreussenStadiumModel extends SimState{
 	
     private static final long serialVersionUID = -2568637684893865458L;
-
+    private int[] intArray = new int[21];
+    private boolean hv = false;
+    
 	public static final int WIDTH = 600; 
 	public static final int HEIGHT = 600; 
     public static int NUM_AGENTS = 120;
@@ -31,7 +34,8 @@ public class PreussenStadiumModel extends SimState{
     public Bag blocks = new Bag();
     public Bag restPolygons = new Bag();
     public ArrayList<Block> blockCapacities = new ArrayList<Block>();
-
+    
+    
     public PreussenStadiumModel(long seed){
         super(seed);
         
@@ -52,6 +56,16 @@ public class PreussenStadiumModel extends SimState{
         movingSpaceAttributes.add("Art");
         //movingSpaceAttributes.add("id_2");
         movingSpaceAttributes.add("Art_2");
+        
+        
+        //Array für random erzeugen
+        int l = -10;
+        for (int k=0;k< intArray.length;k++){
+        	intArray[k] = l;
+        	l++;
+        }
+
+        // shapefile einlesen
         try{
             ShapeFileImporter.read(movingSpaceBoundaries, movingSpace, movingSpaceAttributes, MasonGeometryBlock.class);
         } catch (FileNotFoundException ex){
@@ -59,11 +73,7 @@ public class PreussenStadiumModel extends SimState{
         }
         movingSpace.computeConvexHull();
         fillBlocksWithAdditionalData(movingSpace.getGeometries());
-        	
-        
        // county.computeUnion();
-        
-
     }
     
     private void addAgents(){
@@ -72,34 +82,57 @@ public class PreussenStadiumModel extends SimState{
         		throw new RuntimeException("No polygons found.");
             }
             // zufallsrichtung fuer die ausgangsbewegung
-            Agent a = new Agent(random.nextInt(8));     
-            //finde die Startzone der HomeFans;
-            int objectIndex = homeFansBlockIndex(movingSpace.getGeometries());
-            if (objectIndex != -1){
-            	MasonGeometryBlock mgb =(MasonGeometryBlock) movingSpace.getGeometries().objs[objectIndex];
-            	Point p = mgb.getGeometry().getInteriorPoint();
-            	a.setLocation(p);
-            	MasonGeometry mg = new MasonGeometry(a.getGeometry());
-            	mg.addIntegerAttribute("weight", a.weight);
-    			agents.addGeometry(mg);
-                schedule.scheduleRepeating(a);
-                System.out.println("HomeFans: "+i);
-            } else {
-            	objectIndex = awayFansBlockIndex(movingSpace.getGeometries());
-            	if (objectIndex != -1){
-            		a.setLocation(((MasonGeometryBlock) movingSpace.getGeometries().objs[objectIndex]).getGeometry().getInteriorPoint());
-                	MasonGeometry mg = new MasonGeometry(a.getGeometry());
-                	mg.addIntegerAttribute("weight", a.weight);
-        			agents.addGeometry(mg);
-                    schedule.scheduleRepeating(a);
-            	}
-            	
-            }
-            
+            //Agent a = new Agent(random.nextInt(8));  
+            Agent a = new Agent(((MasonGeometryBlock)blocks.get(2)).getGeometry().getCentroid(), random.nextInt(8));
+            //adde home und awayFans in den jeweiligen Startpolygonen  
+            fanToSimulation(a);   	
         }        
     }
 
-    private void fillBlocksWithAdditionalData(Bag ap){
+    private void fanToSimulation(Agent a) {
+    	int index = -1;
+    	if (a.homeFan){
+    		index = homeFansBlockIndex(movingSpace.getGeometries());
+    		if (index != -1){
+            	MasonGeometryBlock mgblock =(MasonGeometryBlock) movingSpace.getGeometries().objs[index];
+            	MasonGeometry mg = createMGOfAgent(mgblock, a); 
+            	mg.addStringAttribute("fanbase", "home");
+    			agents.addGeometry(mg);
+                schedule.scheduleRepeating(a);
+            }
+        } else {
+        	index = awayFansBlockIndex(movingSpace.getGeometries());
+        	if (index != -1){
+        		MasonGeometryBlock mgblock =(MasonGeometryBlock) movingSpace.getGeometries().objs[index];
+            	MasonGeometry mg = createMGOfAgent(mgblock, a);
+            	mg.addStringAttribute("fanbase", "away");
+            	agents.addGeometry(mg);
+                schedule.scheduleRepeating(a);
+        	}
+        }
+    	
+    	 
+        
+	}
+	private MasonGeometry createMGOfAgent(MasonGeometryBlock mgb, Agent a) {
+    	Point p = null;
+    	while (true){
+    		p = mgb.getGeometry().getCentroid();
+    		int rdX = random.nextInt(21);
+			int rdY = random.nextInt(21);
+			AffineTransformation translate = AffineTransformation.translationInstance(intArray[rdX], intArray[rdY]);
+            p.apply(translate);
+            boolean contains = mgb.getGeometry().contains(p);
+            if (contains) break; 
+    	}
+    	a.setLocation(p);
+    	MasonGeometry mg = new MasonGeometry(a.getGeometry());
+    	mg.addIntegerAttribute("weight", a.weight);
+    	mg.isMovable = true;
+		return mg;
+	}
+
+	private void fillBlocksWithAdditionalData(Bag ap){
     	Bag allpolygons = ap;
         if (allpolygons.isEmpty()){
     		throw new RuntimeException("No polygons found.");
@@ -144,7 +177,7 @@ public class PreussenStadiumModel extends SimState{
         	MasonGeometryBlock region = (MasonGeometryBlock) polygons.get(j);
     		boolean blockHomeFans = (homeFansStartingPoints.contains(region.getStringAttribute("Art")) ||
     				homeFansStartingPoints.contains(region.getStringAttribute("Art_2")));
-    		if (blockHomeFans && region.numAgentsInGeometry()<50){
+    		if (blockHomeFans && region.getGeometry().getArea() > 1 &&region.numAgentsInGeometry()<50){
     			return j;
     		}
         }
@@ -163,6 +196,8 @@ public class PreussenStadiumModel extends SimState{
     	return -1;
     }
     
+    
+
     @Override
     public void start(){
         super.start();

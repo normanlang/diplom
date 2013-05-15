@@ -11,6 +11,7 @@ import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.field.geo.GeomVectorField;
 import sim.util.Bag;
+import sim.util.geo.MasonGeometry;
 
 public class Agent implements Steppable {
 
@@ -31,17 +32,24 @@ public class Agent implements Steppable {
     public Point destination = null;
     public double moveRate = 0.2;
     public int weight;
-    private MersenneTwisterFast random;
+    public boolean homeFan;
+    private MersenneTwisterFast random = new MersenneTwisterFast();;
+    private int steps = 0;
     
     
-    public Agent(Point dest){
-        destination = dest;
+    public Agent(Point dest, int d){
+        direction = d;
+    	destination = dest;
        	weight = calcWeight();
+       	homeFan = randomFan();
     }
     
-    public Agent(int d){
+    
+
+	public Agent(int d){
         direction = d;
        	weight = calcWeight();
+       	homeFan = randomFan();
     }
     public void setLocation(Point p){ 
     	location = p; 
@@ -51,68 +59,87 @@ public class Agent implements Steppable {
     	return location;
     }
     
-    public void step(SimState state){            
+    public void step(SimState state){
+    	steps++;
     	PreussenStadiumModel preussenStadiumModelState = (PreussenStadiumModel)state; 
         GeomVectorField accessableArea = preussenStadiumModelState.movingSpace;
         Coordinate coord = (Coordinate) location.getCoordinate().clone();
         AffineTransformation translate = null;
+        Point tempPoint = (Point) location.clone();
         switch (direction){
             case N : 
             	translate = AffineTransformation.translationInstance(0.0, moveRate);
                 coord.y += moveRate;
+                tempPoint.apply(translate);
                 break;
             case S : 
                 translate = AffineTransformation.translationInstance(0.0, -moveRate);
                 coord.y -= moveRate;
+                tempPoint.apply(translate);
                 break;
             case E : 
                 translate = AffineTransformation.translationInstance(moveRate, 0.0);
                 coord.x += moveRate;
+                tempPoint.apply(translate);
                 break;
             case W :
                 translate = AffineTransformation.translationInstance(-moveRate, 0.0);
                 coord.x -= moveRate;
+                tempPoint.apply(translate);
                 break;
             case NW : 
                 translate = AffineTransformation.translationInstance(-moveRate,moveRate);
                 coord.x -= moveRate;
+                tempPoint.apply(translate);
                 coord.y += moveRate; 
                 break;
             case NE : 
                 translate = AffineTransformation.translationInstance( moveRate, moveRate );
                 coord.x += moveRate;
+                tempPoint.apply(translate);
                 coord.y += moveRate;
                 break;
             case SW : 
                 translate = AffineTransformation.translationInstance(-moveRate, -moveRate);
                 coord.x -= moveRate;
                 coord.y -= moveRate;
+                tempPoint.apply(translate);
                 break;
             case SE : 
                 translate = AffineTransformation.translationInstance( moveRate, -moveRate);
                 coord.x += moveRate;
                 coord.y -= moveRate;
+                tempPoint.apply(translate);
                 break;
             }
-        
-        if (accessableArea.isCovered(coord)){
-        	Bag test = PreussenStadiumModel.agents.getObjectsWithinDistance(location, moveRate);
-        	location.apply(translate);
-        }
-        else direction = state.random.nextInt(8);
+        if (steps > 5){
+        	if (accessableArea.isCovered(coord) && isNotOccupied(tempPoint)){	
+            	location.apply(translate);
+            } else direction = state.random.nextInt(8);
+        } else location.apply(translate);
     }
     
-    private int calcWeight(){
+    private boolean isNotOccupied(Point p) {
+    	Bag nearbyObjects = PreussenStadiumModel.agents.getObjectsWithinDistance(location, moveRate);
+    	for (int i=0; i<nearbyObjects.numObjs; i++){
+    		MasonGeometry actualAgent = (MasonGeometry) nearbyObjects.get(i);
+    		if (actualAgent.getGeometry().intersects(p) || actualAgent.getGeometry().touches(p)){
+    			return false;
+    		}
+    	} 
+    	return true;
+	}
+
+
+
+	private int calcWeight(){
     	int[] weightArray = new int[60];
     	for (int i=0;i<weightArray.length;i++){
     		weightArray[i] = 60+i;
     	}
-    	random = new MersenneTwisterFast();
     	return weightArray[random.nextInt(60)];
     }
-    
-    private boolean isSomeoneThere(Coordinate c){
-    	
-    	return false;
-    }
+    private boolean randomFan() {
+		return random.nextBoolean();
+	}
 }
