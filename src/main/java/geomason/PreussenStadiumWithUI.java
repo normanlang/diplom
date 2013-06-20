@@ -37,7 +37,6 @@ public class PreussenStadiumWithUI extends GUIState{
 
         agentPortrayal.setField(PreussenStadiumModel.agents);
         agentPortrayal.setPortrayalForAll(new OvalPortrayal2D(Color.RED, 4.0)); 
-        agentPortrayal.setPortrayalForObject(agentPortrayal, new OvalPortrayal2D(Color.RED,4.0));
         movingSpacePortrayal.setField(preussenStadiumModelState.movingSpace);
         movingSpacePortrayal.setPortrayalForAll(new GeomPortrayal(Color.GRAY,true));
         agentsBag = PreussenStadiumModel.agents.getGeometries();

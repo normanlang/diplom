@@ -83,7 +83,7 @@ public class PreussenStadiumModel extends SimState{
             }
             // zufallsrichtung fuer die ausgangsbewegung
             //Agent a = new Agent(random.nextInt(8));  
-            Agent a = new Agent(((MasonGeometryBlock)blocks.get(2)).getGeometry().getCentroid(), random.nextInt(8));
+            Agent a = new Agent(((MasonGeometryBlock)blocks.get(2)).getGeometry().getCentroid(), random.nextInt(8), Agent.Stadium.PREUSSEN);
             //adde home und awayFans in den jeweiligen Startpolygonen  
             fanToSimulation(a);   	
         }        
