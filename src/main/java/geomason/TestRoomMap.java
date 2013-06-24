@@ -26,7 +26,8 @@ public class TestRoomMap implements TileBasedMap {
 		room = state;
 		width = room.getWidthinTiles();
 		height = room.getHeightinTiles();
-		minX = room.movingSpace.getMBR().getMinX();
+		//hole minX u. minY zur Berechnung des "Mapursprungs"
+		minX = room.movingSpace.getMBR().getMinX(); 
 		minY = room.movingSpace.getMBR().getMinY();
 		map = new Tile[width][height];
 		visited = new boolean[width][height];
@@ -35,31 +36,30 @@ public class TestRoomMap implements TileBasedMap {
 	
 	
 	private void buildMap() {
-		double xTile = minX;
-		double yTile = minY;
+		int xTile = (int) Math.floor(minX);
+		int yTile = (int) Math.floor(minY);
 		for (int i = 0; i< width; i++){
 			for(int j=0; j< height; j++){
 				
-				//baue ein Polygon was das Tile darstellen soll
+				//baue ein Polygon was das Tile darstellen soll als Quadrat mit einer Kantenlänge von 1m
 				Coordinate p1 = new Coordinate(xTile, yTile);
-				Coordinate p2 = new Coordinate(xTile + room.TILESIZE, yTile);
-				Coordinate p3 = new Coordinate(xTile, yTile + room.TILESIZE);
-				Coordinate p4 = new Coordinate(xTile+ room.TILESIZE, yTile+ room.TILESIZE);
+				Coordinate p2 = new Coordinate(xTile + 1, yTile);
+				Coordinate p3 = new Coordinate(xTile, yTile + 1);
+				Coordinate p4 = new Coordinate(xTile+ 1, yTile+ 1);
 				Coordinate[] points = {p1, p2, p3, p4, p1};
 				LinearRing lr = new GeometryFactory().createLinearRing(points);
 				Polygon poly = new GeometryFactory().createPolygon(lr);
-				Tile tile = new Tile();
+				Tile tile = new Tile(i,j);
 				tile.setPolygon(poly);
-				testRoomMap.addGeometry(tile);
 				if (room.movingSpace.isCovered(tile)){
 					tile.setUsable(true);
 					System.out.println("i: "+i+" j: "+j);
 				}
 				map[i][j] = tile;
 				//ändere die Höhe für das nächste Tile
-				yTile = yTile + room.TILESIZE;
+				yTile = yTile + 1;
 			}
-			xTile = xTile + room.TILESIZE;
+			xTile = xTile + 1;
 		}
 		
 	}
@@ -81,7 +81,7 @@ public class TestRoomMap implements TileBasedMap {
 		if (x > -1 && x <= width && y > -1 && y <= height){
 			return map[x][y];
 		} else{
-			System.out.println("getTile(Map) is out of bounds");
+			System.out.println("getTile(Map) is out of bounds for "+x+","+y);
 			return null;
 		}
 		

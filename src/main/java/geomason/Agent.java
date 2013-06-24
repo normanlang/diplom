@@ -43,14 +43,15 @@ public class Agent implements Steppable, Mover {
     public static enum Stadium {PREUSSEN,TEST,ESPRIT};
     private Stadium stadium;
     private Path path;
-    int step = 0;
+    private int step = 0;
     private TestRoomWithObstacle testRoomModelState = null;
+    private ArrayList<Tile>  pathAsTileList = new ArrayList<Tile>();
+    GeomVectorField accessableArea = null;
     
-    public Agent(Stadium stadium, Tile dest){
+    public Agent(Stadium stadium){
        	weight = calcWeight();
        	homeFan = randomFan();
        	this.stadium = stadium;
-       	destination = dest;
     }
 		
     public void setLocation(Point p){ 
@@ -62,26 +63,11 @@ public class Agent implements Steppable, Mover {
     }
     
     public void step(SimState state){
-    	GeomVectorField accessableArea = null;
-    	switch (stadium){
-    	case PREUSSEN: //für Preussenstadion
-    		PreussenStadiumModel preussenStadiumModelState = (PreussenStadiumModel)state; 
-            accessableArea = preussenStadiumModelState.movingSpace;
-            break;
-    	case TEST:         //für Testroom
-    		testRoomModelState = (TestRoomWithObstacle)state; 
-            accessableArea = testRoomModelState.movingSpace;
-            break;
-    	case ESPRIT: 
-    		System.out.println("noch nicht fertig");
-    		break;
-    	default: 
-    		System.out.println("es wurde kein Stadium ausgewählt");
-    		break;
-    	}
         //weiter gehts
-    	testRoomModelState.calculateLineOfSight(this);
-     step++;
+    	setStateDependingOnStadium(state);
+    	//testRoomModelState.calculateLineOfSight(this);
+    	moveAgent();
+  
     }
     
 
@@ -98,10 +84,11 @@ public class Agent implements Steppable, Mover {
 		return random.nextBoolean();
 	}
     
-    public void calculateNextPosition(){
+    public void calculateNextPosition(SimState state){
+    	setStateDependingOnStadium(state);
     	AffineTransformation translate = null;
     	Step nextStep = path.getStep(step+1);
-    	Tile nextTile = testRoomModelState.getTile(nextStep.getX(), nextStep.getY());
+    	Tile nextTile = testRoomModelState.getTileByCoord(nextStep.getX(), nextStep.getY());
     	if (nextTile.getAgentList().isEmpty()){
     		double difx = nextTile.getGeometry().getCentroid().getX() - this.getGeometry().getCoordinate().x;
     		double dify = nextTile.getGeometry().getCentroid().getY() - this.getGeometry().getCoordinate().y;
@@ -133,7 +120,25 @@ public class Agent implements Steppable, Mover {
     		}*/
     }
     
-
+    private void moveAgent(){
+    	if (pathAsTileList.isEmpty()){
+    		return; //da die liste leer ist ist entweder das ziel erreicht oder kein ziel gegeben
+    	}
+    	System.out.println("Pos: "+location.getX()+", "+location.getY()+" noch "+pathAsTileList.size()+" Steps");
+    	Tile nextTile = pathAsTileList.get(0);
+    	//Tile destTile = pathAsTileList.get(pathAsTileList.size());
+    	Coordinate actCoord = location.getCoordinate();
+    	Coordinate nextCoord = nextTile.getGeometry().getCentroid().getCoordinate();
+    	Coordinate moveCoord = coordOnLineOfActAndNext(actCoord, nextCoord);
+    	// berechne die Differenz der Punkte
+    	double difx = moveCoord.x - actCoord.x;
+    	double dify = moveCoord.y - actCoord.y;
+    	AffineTransformation translate = new AffineTransformation();
+    	translate  = AffineTransformation.translationInstance(difx, dify);
+    	location.apply(translate);    	
+    	pathAsTileList.remove(0);
+    	
+    }
 
 	/**
 	 * @return the path
@@ -145,7 +150,60 @@ public class Agent implements Steppable, Mover {
 	/**
 	 * @param path the path to set
 	 */
-	public void setPath(Path path) {
-		this.path = path;
+	public void setPath(SimState state, Path p) {
+		setStateDependingOnStadium(state);
+		if (p!=null){
+			this.path = p;
+			//packe alle tiles in eine arraylist zum einfache
+			for (int i=0; i< path.getLength();i++){
+				Step step = path.getStep(i);
+				System.out.println(step.getX()+", "+step.getY());
+				Tile t = testRoomModelState.getTile(step.getX(), step.getY());
+				pathAsTileList.add(i, t);
+			}
+		}
+	}
+	
+	/**
+	 * calculates the point on the line between actual position and next position depending on the moveRate
+	 * @param actCoord the actual position
+	 * @param nextCoord the next position
+	 * @return the 
+	 */
+	private Coordinate coordOnLineOfActAndNext(Coordinate actCoord, Coordinate nextCoord){
+		//berechne Richtungsvektor
+		double rx = nextCoord.x - actCoord.x;
+		double ry = nextCoord.y - actCoord.y;
+		//berechne norm des richtungsvektors
+		double norm;
+		if (rx == 0 && ry == 0){
+			norm = 1;
+		} else norm = 1 / Math.sqrt(rx * rx + ry * ry);
+		//berechne gesuchten Punkt der auf der geraden AP-EP liegt und den Abstand der moveRate vom 
+		//actPoint hat
+		double xm = actCoord.x + moveRate * norm *rx;
+		double ym = actCoord.y + moveRate * norm *ry;
+		Coordinate c = new Coordinate(xm, ym);
+		return c;
+	}
+	
+	private void setStateDependingOnStadium(SimState state){
+    	switch (stadium){
+    	case PREUSSEN: //für Preussenstadion
+    		PreussenStadiumModel preussenStadiumModelState = (PreussenStadiumModel)state; 
+            accessableArea = preussenStadiumModelState.movingSpace;
+            break;
+    	case TEST:         //für Testroom
+    		testRoomModelState = (TestRoomWithObstacle)state; 
+            accessableArea = testRoomModelState.movingSpace;
+            break;
+    	case ESPRIT: 
+    		System.out.println("noch nicht fertig");
+    		break;
+    	default: 
+    		System.out.println("es wurde kein Stadium ausgewählt");
+    		break;
+    	}
+
 	}
 }

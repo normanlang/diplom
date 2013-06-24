@@ -4,9 +4,16 @@ import java.util.ArrayList;
 
 import sim.util.geo.MasonGeometry;
 
+import com.vividsolutions.jts.algorithm.ConvexHull;
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 
+/**
+ * @author slayer
+ *
+ */
 public class Tile extends MasonGeometry{
 
 	/**
@@ -16,13 +23,17 @@ public class Tile extends MasonGeometry{
 	private ArrayList<Agent> agentList = new ArrayList<Agent>();
 	private boolean usable = false;
 	private Polygon polygon = null;
+	private int x,y;
 	
-	public Tile() {
+	public Tile(int x, int y) {
 		super();
+		this.x = x;
+		this.y = y;
 	}
 
 	public void setPolygon(Polygon p){
 		polygon = p;
+		polygon.convexHull();
 	}
 	
 	public Geometry getGeometry(){
@@ -62,5 +73,23 @@ public class Tile extends MasonGeometry{
 		return agentList;
 	}
 	
+	/**
+	 * @return x the x in the map matrix
+	 */
+	public int getX(){
+		return x;
+	}
+	
+	/**
+	 * @return y the y in the map matrix
+	 */
+	public int getY(){
+		return y;
+	}
+	
+	public boolean isInTile(Point p){
+		boolean b = polygon.covers(p);
+		return b;
+	}
 	
 }

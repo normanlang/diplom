@@ -2,34 +2,20 @@ package geomason;
 
 import java.io.FileNotFoundException;
 import java.net.URL;
-
-
-import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.util.AffineTransformation;
-import com.vividsolutions.jts.planargraph.Node;
-
 import sim.engine.SimState;
 import sim.field.geo.GeomVectorField;
 import sim.io.geo.ShapeFileImporter;
 import sim.util.Bag;
-import sim.util.geo.GeomPlanarGraph;
-import sim.util.geo.GeomPlanarGraphEdge;
 import sim.util.geo.MasonGeometry;
-
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.TreeMap;
-
-import org.newdawn.pathexample.UnitMover;
 import org.newdawn.slick.util.pathfinding.AStarPathFinder;
-import org.newdawn.slick.util.pathfinding.Mover;
 import org.newdawn.slick.util.pathfinding.Path;
 import org.newdawn.slick.util.pathfinding.PathFinder;
-import org.newdawn.slick.util.pathfinding.Path.Step;
+
 
 public class TestRoomWithObstacle extends SimState{
 	/**
@@ -39,15 +25,16 @@ public class TestRoomWithObstacle extends SimState{
 
 	public static final int WIDTH = 800; 
 	public static final int HEIGHT = 600;
-	public static final double TILESIZE = 0.5;
     public static int NUM_AGENTS = 1;
-    public GeomVectorField movingSpace = new GeomVectorField(WIDTH, HEIGHT);
     public static GeomVectorField agents = new GeomVectorField(WIDTH, HEIGHT);
+    public static ArrayList<String> homeFansStartingPoints = new ArrayList<String>();
+    
+    public GeomVectorField movingSpace = new GeomVectorField(WIDTH, HEIGHT);
+    
     private int[] intArray = new int[21];
     public Bag blocks = new Bag();
     public Bag restPolygons = new Bag();
     public ArrayList<Block> blockCapacities = new ArrayList<Block>();
-    public static ArrayList<String> homeFansStartingPoints = new ArrayList<String>();
     private PathFinder finder;
     private Path path;
     private TestRoomMap map;
@@ -77,18 +64,24 @@ public class TestRoomWithObstacle extends SimState{
 	            }
 	        	Point p = ((MasonGeometryBlock)blocks.get(2)).getGeometry().getCentroid();
 	        	Point p2 = ((MasonGeometryBlock)movingSpace.getGeometries().get(1)).getGeometry().getCentroid();
-	        	Coordinate coord = p.getCoordinate();
-	        	Bag test = map.testRoomMap.getContainingObjects(p);
-	        	Bag test2 = map.testRoomMap.getCoveringObjects(p);
-	        	Tile start = map.getTile(p.getCoordinate().X, p.getCoordinate().Y);
-	        	Tile dest = map.getTile(p2.getCoordinate().X, p2.getCoordinate().Y);
-	        	System.out.println(p.getCoordinate().X+" "+ coord.x+ " "+coord.X);
-	            Agent a = new Agent(Agent.Stadium.TEST, dest);
-	            finder = new AStarPathFinder(map, 500, true);
-	            path = finder.findPath(a,p.getCoordinate().X, p.getCoordinate().Y, p2.getCoordinate().X, p2.getCoordinate().Y);
-	            a.setPath(path);
+	        	//lege startkoordinaten fest
+	        	int xs = (int) p.getCoordinate().x, ys = (int) p.getCoordinate().y;
+	        	//lege zielkoordinaten fest
+	        	int xd = (int) p2.getCoordinate().x, yd = (int) p2.getCoordinate().y;
+	        	//hole die entsprechenden tiles
+	        	Tile start = this.getTileByCoord(xs, ys);
+	        	Tile dest = this.getTileByCoord(xd, yd);
+	            Agent a = new Agent(Agent.Stadium.TEST);
+	            int maxNodes = getWidthinTiles() * getHeightinTiles();
+	            finder = new AStarPathFinder(map, maxNodes, true);
+	            path = finder.findPath(a,start.getX(), start.getY(), dest.getX(), dest.getY());
+	            if (path != null){
+	            	a.setPath(this, path);
+	            	System.out.println("steps: "+path.getLength());
+	            } else { System.out.println("Keinen Weg gefunden");}
+	            System.out.println("Start: "+p.getCoordinate().x+", "+p.getCoordinate().y 
+	            		+" Ende: "+ p2.getCoordinate().x+", "+ p2.getCoordinate().y);            
 	            start.addAgent(a);
-	            System.out.println("steps: "+path.getLength());
 	            //adde home und awayFans in den jeweiligen Startpolygonen  
 	            fanToSimulation(a); 
 	        }        
@@ -171,8 +164,9 @@ public class TestRoomWithObstacle extends SimState{
 
 	    public void calculateLineOfSight(Agent a){
 	    	Path p = a.getPath();
-	    	
-	    	Tile actualTile = this.getTile(a.getGeometry().getCoordinate().X, a.getGeometry().getCoordinate().Y);
+	    	int actX = (int) a.getGeometry().getCoordinate().x;
+	    	int actY = (int) a.getGeometry().getCoordinate().y;
+	    	Tile actualTile = this.getTileByCoord(actX, actY);
 	    	Bag agentsInDistance = agents.getObjectsWithinDistance(actualTile, dmax);
 	    	Bag futurePosOfAgents = calcNextPosOfAgents(agentsInDistance);
 	    	for (int i=0; i< futurePosOfAgents.numObjs; i++){
@@ -196,7 +190,7 @@ public class TestRoomWithObstacle extends SimState{
 	    		for (int n=0;n<agentsInDistance.numObjs;n++){
 		    		Agent ag = (Agent) agentsInDistance.get(n);
 		    		//TODO: annahme nächste position wird erreicht ohne Probleme
-		    		ag.calculateNextPosition();
+		    		ag.calculateNextPosition(this);
 		    		agentsNextPos = new Bag();
 		    		agentsNextPos.add(ag);
 		    	}
@@ -237,31 +231,45 @@ public class TestRoomWithObstacle extends SimState{
 	public int getWidthinTiles(){
 		Envelope mbr = movingSpace.getMBR();
 		//stellt sicher dass die Länge der Fläche an tiles min. so gross ist wie die länge
-		//ein Tile soll max 0,5x0,5m betragen
-		int widthinTiles = (int) Math.ceil(mbr.getWidth() * TILESIZE); 
+		//ein Tile soll 1x1m betragen
+		int widthinTiles = (int) Math.ceil(mbr.getWidth()); 
 		return widthinTiles;
 	}
 	public int getHeightinTiles(){
 		Envelope mbr = movingSpace.getMBR();
 		//stellt sicher dass die Breite der Fläche an tiles min. so gross ist wie die breite
-		//ein Tile soll max 0,5x0,5m betragen
-		int heightInTiles = (int) Math.ceil(mbr.getHeight() * TILESIZE); 
+		//ein Tile soll 1x1m betragen
+		int heightInTiles = (int) Math.ceil(mbr.getHeight()); 
 		return heightInTiles;
 	}
 	
-	public Tile getTile(int x, int y){
-		if (x > -1 && x <= map.getWidthInTiles() && y > -1 && y <= map.getHeightInTiles()){
-			return map.getTile(x, y);
-		} else{
-			System.out.println("getTile is out of bounds");
-			return null;
-		}
-		
-		
+	
+	/**
+	 * gets the tile at position x,y
+	 * @param x 
+	 * @param y
+	 * @return
+	 */
+	public Tile getTileByCoord(int x, int y){
+		//da die tiles bei dem minX und minY des MBR anfangen, ist die Position 
+		//(minX, minY) in der Map das Tile an der Stelle (0,0)
+		int tempX = x - (int) Math.floor(movingSpace.getMBR().getMinX());
+		int tempY = y - (int) Math.floor(movingSpace.getMBR().getMinY());
+		return map.getTile(tempX, tempY);
 	}
 	
+	
+	public Tile getTile(int x, int y){
+		if (map.getTile(x, y) == null){
+			System.out.println("index out of bounds - TestRoom - getTile");
+		}
+		return map.getTile(x, y);
+	}	
+
+
 	public Path calcNewPath(Agent a,int actX, int actY, int destX, int destY){
-		PathFinder find = new AStarPathFinder(map, 500, true);
+        int maxNodes = getWidthinTiles() * getHeightinTiles();
+		PathFinder find = new AStarPathFinder(map, maxNodes, true);
         return find.findPath(a,actX, actY, destX, destY);
 	}
 	
