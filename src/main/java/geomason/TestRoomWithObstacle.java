@@ -2,7 +2,10 @@ package geomason;
 
 import java.io.FileNotFoundException;
 import java.net.URL;
+
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
+import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.util.AffineTransformation;
 import sim.engine.SimState;
@@ -62,12 +65,16 @@ public class TestRoomWithObstacle extends SimState{
 	        	if (movingSpace.getGeometries().isEmpty()){
 	        		throw new RuntimeException("No polygons found.");
 	            }
-	        	Point p = ((MasonGeometryBlock)blocks.get(2)).getGeometry().getCentroid();
-	        	Point p2 = ((MasonGeometryBlock)movingSpace.getGeometries().get(1)).getGeometry().getCentroid();
+	        	
 	        	//lege startkoordinaten fest
-	        	int xs = (int) p.getCoordinate().x, ys = (int) p.getCoordinate().y;
+	        	//int xs = (int) p.getCoordinate().x, ys = (int) p.getCoordinate().y;
 	        	//lege zielkoordinaten fest
-	        	int xd = (int) p2.getCoordinate().x, yd = (int) p2.getCoordinate().y;
+	        	//int xd = (int) p2.getCoordinate().x, yd = (int) p2.getCoordinate().y;
+	        	
+	        	//lege startkoordinaten fest
+	        	int xs = 405496, ys = 5754179;
+	        	//lege zielkoordinaten fest
+	        	int xd = 405583, yd = 5754210;
 	        	//hole die entsprechenden tiles
 	        	Tile start = this.getTileByCoord(xs, ys);
 	        	Tile dest = this.getTileByCoord(xd, yd);
@@ -79,11 +86,16 @@ public class TestRoomWithObstacle extends SimState{
 	            	a.setPath(this, path);
 	            	System.out.println("steps: "+path.getLength());
 	            } else { System.out.println("Keinen Weg gefunden");}
-	            System.out.println("Start: "+p.getCoordinate().x+", "+p.getCoordinate().y 
-	            		+" Ende: "+ p2.getCoordinate().x+", "+ p2.getCoordinate().y);            
+	            System.out.println("Start: "+xs+", "+ys+" Ende: "+ xd+", "+ yd);            
 	            start.addAgent(a);
 	            //adde home und awayFans in den jeweiligen Startpolygonen  
-	            fanToSimulation(a); 
+	            //fanToSimulation(a); 
+	            Point p = new GeometryFactory().createPoint(new Coordinate(405496.82 , 5754179.10));
+		    	a.setLocation(p);
+		    	MasonGeometry mg = new MasonGeometry(a.getGeometry());
+		    	mg.isMovable = true;
+    			agents.addGeometry(mg);
+                schedule.scheduleRepeating(a);
 	        }        
 	    }
 
@@ -217,16 +229,7 @@ public class TestRoomWithObstacle extends SimState{
 		movingSpace.computeConvexHull();
 	}
 	
-	@Override
-    public void start(){
-        super.start();
-        //entferne eventuell noch vorhandene Agenten
-        agents.clear(); 
-        //füge neue Agenten hinzu
-        addAgents();
-        //setze den minimum bounding rectangle anhand des Bewegungsraums
-        agents.setMBR(movingSpace.getMBR());
-    }
+
     
 	public int getWidthinTiles(){
 		Envelope mbr = movingSpace.getMBR();
@@ -281,7 +284,16 @@ public class TestRoomWithObstacle extends SimState{
     public void setNumAgents(int a){ 
     	if (a > 0) NUM_AGENTS = a; 
     }
-    
+	@Override
+    public void start(){
+        super.start();
+        //entferne eventuell noch vorhandene Agenten
+        agents.clear(); 
+        //füge neue Agenten hinzu
+        addAgents();
+        //setze den minimum bounding rectangle anhand des Bewegungsraums
+        agents.setMBR(movingSpace.getMBR());
+    }    
     
     public static void main(String[] args){
         doLoop(TestRoomWithObstacle.class, args);

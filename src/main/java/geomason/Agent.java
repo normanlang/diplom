@@ -46,7 +46,9 @@ public class Agent implements Steppable, Mover {
     private int step = 0;
     private TestRoomWithObstacle testRoomModelState = null;
     private ArrayList<Tile>  pathAsTileList = new ArrayList<Tile>();
+    private ArrayList<Coordinate> pathAsCoordList = new ArrayList<Coordinate>();
     GeomVectorField accessableArea = null;
+    private PointMoveTo pointMoveTo = new PointMoveTo();
     
     public Agent(Stadium stadium){
        	weight = calcWeight();
@@ -54,19 +56,14 @@ public class Agent implements Steppable, Mover {
        	this.stadium = stadium;
     }
 		
-    public void setLocation(Point p){ 
-    	location = p; 
-    }
 
-    public Geometry getGeometry(){ 
-    	return location;
-    }
     
     public void step(SimState state){
         //weiter gehts
     	setStateDependingOnStadium(state);
     	//testRoomModelState.calculateLineOfSight(this);
     	moveAgent();
+    	//moveAgentTest();
   
     }
     
@@ -120,6 +117,18 @@ public class Agent implements Steppable, Mover {
     		}*/
     }
     
+    private void moveAgentTest(){
+    	if (pathAsCoordList.isEmpty()){
+    		return; //da die liste leer ist ist entweder das ziel erreicht oder kein ziel gegeben
+    	}
+    	System.out.println("Pos: "+location.getX()+", "+location.getY()+" noch "+pathAsTileList.size()+" Steps");
+    	
+    	Coordinate nextCoord = pathAsCoordList.get(0);
+    	moveTo(nextCoord);
+     	pathAsCoordList.remove(0);
+     	
+    }
+    
     private void moveAgent(){
     	if (pathAsTileList.isEmpty()){
     		return; //da die liste leer ist ist entweder das ziel erreicht oder kein ziel gegeben
@@ -131,11 +140,13 @@ public class Agent implements Steppable, Mover {
     	Coordinate nextCoord = nextTile.getGeometry().getCentroid().getCoordinate();
     	Coordinate moveCoord = coordOnLineOfActAndNext(actCoord, nextCoord);
     	// berechne die Differenz der Punkte
-    	double difx = moveCoord.x - actCoord.x;
+    	/*double difx = moveCoord.x - actCoord.x;
     	double dify = moveCoord.y - actCoord.y;
     	AffineTransformation translate = new AffineTransformation();
     	translate  = AffineTransformation.translationInstance(difx, dify);
-    	location.apply(translate);    	
+    	location.apply(translate);*/
+    	moveTo(moveCoord);
+    	System.out.println("neue Loc: "+location.getX()+", "+location.getY());
     	pathAsTileList.remove(0);
     	
     }
@@ -155,12 +166,8 @@ public class Agent implements Steppable, Mover {
 		if (p!=null){
 			this.path = p;
 			//packe alle tiles in eine arraylist zum einfache
-			for (int i=0; i< path.getLength();i++){
-				Step step = path.getStep(i);
-				System.out.println(step.getX()+", "+step.getY());
-				Tile t = testRoomModelState.getTile(step.getX(), step.getY());
-				pathAsTileList.add(i, t);
-			}
+			setPathAsTileList();
+			setpathasCoordList();
 		}
 	}
 	
@@ -187,6 +194,32 @@ public class Agent implements Steppable, Mover {
 		return c;
 	}
 	
+    // bewegt den Agenten zu den gegebenen Koordinaten
+    public void moveTo(Coordinate c)
+    {
+        pointMoveTo.setCoordinate(c);
+        location.apply(pointMoveTo);
+    }
+    
+    private void setPathAsTileList(){
+    	for (int i=0; i< path.getLength();i++){
+			Step step = path.getStep(i);
+			System.out.println(step.getX()+", "+step.getY());
+			Tile t = testRoomModelState.getTile(step.getX(), step.getY());
+			pathAsTileList.add(i, t);
+		}
+    }
+    
+    private void setpathasCoordList(){
+    	for (int i=0; i< path.getLength();i++){
+			Step step = path.getStep(i);
+			System.out.println(step.getX()+", "+step.getY());
+			Tile t = testRoomModelState.getTile(step.getX(), step.getY());
+			Coordinate c = t.getGeometry().getCentroid().getCoordinate();
+			pathAsCoordList.add(i, c);
+		}
+    }
+    
 	private void setStateDependingOnStadium(SimState state){
     	switch (stadium){
     	case PREUSSEN: //für Preussenstadion
@@ -204,6 +237,13 @@ public class Agent implements Steppable, Mover {
     		System.out.println("es wurde kein Stadium ausgewählt");
     		break;
     	}
-
 	}
+	
+    public void setLocation(Point p){ 
+    	location = p; 
+    }
+
+    public Geometry getGeometry(){ 
+    	return location;
+    }
 }

@@ -21,6 +21,7 @@ public class Tile extends MasonGeometry{
 	 */
 	private static final long serialVersionUID = -5161567811618409640L;
 	private ArrayList<Agent> agentList = new ArrayList<Agent>();
+	private ArrayList<RoomAgent> roomAgentList = new ArrayList<RoomAgent>();
 	private boolean usable = false;
 	private Polygon polygon = null;
 	private int x,y;
@@ -90,6 +91,30 @@ public class Tile extends MasonGeometry{
 	public boolean isInTile(Point p){
 		boolean b = polygon.covers(p);
 		return b;
+	}
+	
+	//für room
+	public void addRoomAgent(RoomAgent a){
+		roomAgentList.add(a);
+		
+	}
+	
+	public void addRoomAgents(ArrayList<RoomAgent> ral){
+		roomAgentList.addAll(ral);
+	}
+	public void removeRoomAgent(RoomAgent a){
+		roomAgentList.remove(a);
+	}
+	
+	public void removeRoomAgents(ArrayList<RoomAgent> ral){
+		roomAgentList.removeAll(ral);
+	}
+
+	/**
+	 * @return the agentList
+	 */
+	public ArrayList<RoomAgent> getRoomAgentList() {
+		return roomAgentList;
 	}
 	
 }
