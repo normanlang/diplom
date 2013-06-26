@@ -58,8 +58,8 @@ public class RoomAgent implements Steppable, Mover{
     		actTile.addRoomAgent(this);
     	}
     	Tile nextTile = pathAsTileList.get(step+1);
-    	double nextX = nextTile.getX() + Math.floor(roomState.movingSpace.getMBR().getMinX());
-    	double nextY = nextTile.getY() + Math.floor(roomState.movingSpace.getMBR().getMinY());
+    	double nextX = nextTile.getX()/10 + Math.floor(roomState.movingSpace.getMBR().getMinX());
+    	double nextY = nextTile.getY()/10 + Math.floor(roomState.movingSpace.getMBR().getMinY());
     	Coordinate coord = new Coordinate((nextX), (nextY));
     	if (nextTile.getRoomAgentList().isEmpty()){
     		moveTo(coord);

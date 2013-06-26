@@ -22,6 +22,7 @@ public class TestRoomMap implements TileBasedMap {
 	private boolean[][] visited; 
 	TestRoomWithObstacle testRoom;
 	Room room;
+	Bag obstacles = new Bag();
 	
 	public TestRoomMap(TestRoomWithObstacle state){
 		testRoom = state;
@@ -44,34 +45,49 @@ public class TestRoomMap implements TileBasedMap {
 		minY = (int) Math.floor(room.movingSpace.getMBR().getMinY());
 		map = new Tile[width][height];
 		visited = new boolean[width][height];
+		obstacles = room.obstacles.getGeometries();
+		System.out.println("Erzeuge Raster...");
 		buildRoomMap();
+		System.out.println("Rastererstellung fertig");
 	}
 
 	private void buildRoomMap() {
-		int xTile = (int) Math.floor(minX);
-		int yTile = (int) Math.floor(minY);
+		double xTile = Math.floor(minX);
+		double yTile = Math.floor(minY);
 		for (int i = 0; i< width; i++){
 			for(int j=0; j< height; j++){
 				
 				//baue ein Polygon was das Tile darstellen soll als Quadrat mit einer Kantenlänge von 1m
 				Coordinate p1 = new Coordinate(xTile, yTile);
-				Coordinate p2 = new Coordinate(xTile + 1, yTile);
-				Coordinate p3 = new Coordinate(xTile, yTile + 1);
-				Coordinate p4 = new Coordinate(xTile+ 1, yTile+ 1);
+				Coordinate p2 = new Coordinate(xTile + 0.1, yTile);
+				Coordinate p3 = new Coordinate(xTile, yTile + 0.1);
+				Coordinate p4 = new Coordinate(xTile+ 0.1, yTile+ 0.1);
 				Coordinate[] points = {p1, p2, p3, p4, p1};
 				LinearRing lr = new GeometryFactory().createLinearRing(points);
 				Polygon poly = new GeometryFactory().createPolygon(lr);
 				Tile tile = new Tile(i,j);
 				tile.setPolygon(poly);
-				if (room.movingSpace.isCovered(tile)){
-					tile.setUsable(true);
-					System.out.println("i: "+i+" j: "+j);
+				boolean b;
+				for (int m= 0; m < obstacles.numObjs; m++){
+					Geometry g = ((MasonGeometry) obstacles.get(m)).getGeometry();
+					b= g.intersects(poly);
+					if(b) {
+						System.out.println("tile ist auf hinderniss");
+						break;
+					}
+				}
+				for (Coordinate c :points){
+					if (room.movingSpace.isCovered(c)){
+						tile.setUsable(true);
+						System.out.println("i: "+i+" j: "+j);
+						break;
+					}
 				}
 				map[i][j] = tile;
 				//ändere die Höhe für das nächste Tile
-				yTile = yTile + 1;
+				yTile = yTile + 0.1;
 			}
-			xTile = xTile + 1;
+			xTile = xTile + 0.1;
 		}
 		
 	}
@@ -142,10 +158,9 @@ public class TestRoomMap implements TileBasedMap {
 			return false;
 		} else return true;*/
 		//ab hier neu
-		double posX = t.getX() + Math.floor(room.movingSpace.getMBR().getMinX());
-		double posY = t.getY() + Math.floor(room.movingSpace.getMBR().getMinY());
+		double posX = t.getX()/10 + Math.floor(room.movingSpace.getMBR().getMinX());
+		double posY = t.getY()/10 + Math.floor(room.movingSpace.getMBR().getMinY());
 		Coordinate coord = new Coordinate(posX, posY);
-		System.out.println("Feld blocked?"+room.movingSpace.isCovered(coord));
 		if (room.movingSpace.isCovered(coord) && t.getAgentList().isEmpty()){
 			return false;
 		} else return true;

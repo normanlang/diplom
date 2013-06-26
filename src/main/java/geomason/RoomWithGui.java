@@ -44,7 +44,7 @@ public class RoomWithGui extends GUIState{
         Room roomState = (Room) state;
         agentPortrayal.setField(Room.agents);
         System.out.println("anzahl agenten: "+Room.agents.getGeometries().numObjs );
-        agentPortrayal.setPortrayalForAll(new OvalPortrayal2D(Color.RED, 4.0)); 
+        agentPortrayal.setPortrayalForAll(new OvalPortrayal2D(Color.RED, 1.0)); 
         movingSpacePortrayal.setField(roomState.movingSpace);
         movingSpacePortrayal.setPortrayalForAll(new GeomPortrayal(Color.GRAY,true));
         display.reset();
