@@ -145,7 +145,6 @@ public class TestRoomMap implements TileBasedMap {
 		double posX = t.getX() + Math.floor(room.movingSpace.getMBR().getMinX());
 		double posY = t.getY() + Math.floor(room.movingSpace.getMBR().getMinY());
 		Coordinate coord = new Coordinate(posX, posY);
-		System.out.println("Feld blocked?"+room.movingSpace.isCovered(coord));
 		if (room.movingSpace.isCovered(coord) && t.getAgentList().isEmpty()){
 			return false;
 		} else return true;
