@@ -58,7 +58,13 @@ public class Room extends SimState{
 	        	if (til.getX() > maxX) maxX = til.getX();
 	        	if (til.getY() < miY) miY = til.getY();
 	        	if (til.getY() > maxY) maxY = til.getY();
-	        }			
+	        }
+	        ArrayList<Tile> tlist = new ArrayList<Tile>();
+	        for (int k= miX; k==maxX;k++){
+	        	for (int j = miY; j==maxY;j++){
+	        		tlist.add(getTile(k, j));
+	        	}
+	        }
 	        //TODO: hole per for schleife alle tiles und schaue genau nach welche davon
 	        // die obstacles eigentlich schneiden müssten...  
 	        System.out.println("");
