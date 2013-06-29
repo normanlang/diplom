@@ -24,10 +24,11 @@ import org.newdawn.slick.util.pathfinding.PathFinder;
 public class Room extends SimState{
 
 		private static final long serialVersionUID = -1430063512195387977L;
-
+		
+		public static final double TILESIZE = 0.5;
 		public static final int WIDTH = 800; 
 		public static final int HEIGHT = 600;
-	    public static int NUM_AGENTS = 10;
+	    public static int NUM_AGENTS = 20;
 	    public static GeomVectorField agents = new GeomVectorField(WIDTH, HEIGHT);   
 	    public GeomVectorField movingSpace = new GeomVectorField(WIDTH, HEIGHT);
 	    private TestRoomMap map;
@@ -40,6 +41,7 @@ public class Room extends SimState{
 		}
 		
 		   private void addAgents(){
+			   int e =0;
 		        for (int i = 0; i < NUM_AGENTS; i++){
 		        	if (movingSpace.getGeometries().isEmpty()){
 		        		throw new RuntimeException("No polygons found.");
@@ -49,14 +51,16 @@ public class Room extends SimState{
 		        	//lege zielkoordinaten fest
 		        	int xd = 405583, yd = 5754210;
 		        	//hole die entsprechenden tiles
-		        	RoomAgent a = new RoomAgent(Stadium.TEST);
-		        	Tile startTile = getTileByCoord(xs, ys+i);
+		        	RoomAgent a = new RoomAgent(i, Stadium.TEST);
+		        	int d = i%10;
+		        	if (d==0) e++; 
+		        	Tile startTile = getTileByCoord(xs-e, ys+d);
 		        	Tile endTile = getTileByCoord(xd, yd);
 		        	Path p = calcNewPath(a, startTile, endTile);
 		        	if (p!=null){
 		        		a.setPath(this, p);
 		        	}
-		        	Point loc = new GeometryFactory().createPoint(new Coordinate(405496.82 , 5754179.10));
+		        	Point loc = new GeometryFactory().createPoint(new Coordinate(405496.82-e , 5754179.10+d));
 			    	a.setLocation(loc);
 			    	MasonGeometry mg = new MasonGeometry(a.getGeometry());
 			    	mg.isMovable = true;
@@ -88,18 +92,18 @@ public class Room extends SimState{
 		
 
 	    
-		public int getWidthinTiles(){
+		public int getWidthInTiles(){
 			Envelope mbr = movingSpace.getMBR();
 			//stellt sicher dass die Länge der Fläche an tiles min. so gross ist wie die länge
-			//ein Tile soll 1x1m betragen
-			int widthinTiles = (int) Math.ceil(mbr.getWidth()); 
+			//ein Tile soll 0,5x0,5m betragen
+			int widthinTiles = (int) (Math.ceil(mbr.getWidth()) / TILESIZE); 
 			return widthinTiles;
 		}
-		public int getHeightinTiles(){
+		public int getHeightInTiles(){
 			Envelope mbr = movingSpace.getMBR();
 			//stellt sicher dass die Breite der Fläche an tiles min. so gross ist wie die breite
-			//ein Tile soll 1x1m betragen
-			int heightInTiles = (int) Math.ceil(mbr.getHeight()); 
+			//ein Tile soll 0,5x0,5m betragen
+			int heightInTiles = (int) (Math.ceil(mbr.getHeight()) / TILESIZE); 
 			return heightInTiles;
 		}
 		
@@ -110,14 +114,31 @@ public class Room extends SimState{
 		 * @param y
 		 * @return
 		 */
-		public Tile getTileByCoord(int x, int y){
+		public Tile getTileByCoord(double x, double y){
 			//da die tiles bei dem minX und minY des MBR anfangen, ist die Position 
 			//(minX, minY) in der Map das Tile an der Stelle (0,0)
-			int tempX = x - (int) Math.floor(movingSpace.getMBR().getMinX());
-			int tempY = y - (int) Math.floor(movingSpace.getMBR().getMinY());
-			return map.getTile(tempX, tempY);
+			int tileX, tileY;
+			double tempX = x - Math.floor(movingSpace.getMBR().getMinX());
+			double tempY = y - Math.floor(movingSpace.getMBR().getMinY());
+			if (tempX - Math.floor(tempX) < TILESIZE){
+				tileX = (int) ((int) Math.floor(tempX) / TILESIZE);
+			} else {
+				tileX = (int) ((int) Math.floor(tempX) / TILESIZE) +1;
+			}
+			if (tempY - Math.floor(tempY) < TILESIZE){
+				tileY = (int) ((int) Math.floor(tempY) / TILESIZE);
+			} else {
+				tileY = (int) ((int) Math.floor(tempY) / TILESIZE) +1;
+			}
+			return map.getTile(tileX, tileY);
 		}
 		
+		public Coordinate getCoordForTile(Tile tile){
+			double posX = Math.floor(movingSpace.getMBR().getMinX()) + tile.getX() * TILESIZE;
+			double posY = Math.floor(movingSpace.getMBR().getMinY()) + tile.getY() * TILESIZE;
+			Coordinate coord = new Coordinate(posX, posY);
+			return coord;
+		}
 		
 		public Tile getTile(int x, int y){
 			if (map.getTile(x, y) == null){
@@ -130,7 +151,7 @@ public class Room extends SimState{
 		public Path calcNewPath(RoomAgent a, Tile start, Tile end){
 			int actX = start.getX(), actY = start.getY(); 
 			int destX = end.getX(), destY = end.getY();
-	        int maxNodes = getWidthinTiles() * getHeightinTiles();
+	        int maxNodes = getWidthInTiles() * getHeightInTiles();
 			PathFinder find = new AStarPathFinder(map, maxNodes, true);
 			if (find.findPath(a,actX, actY, destX, destY) == null){
 				System.err.println("Keinen Pfad gefunden");

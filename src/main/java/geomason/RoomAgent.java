@@ -3,10 +3,13 @@ package geomason;
 
 import java.util.ArrayList;
 import java.util.SortedMap;
+import java.util.logging.Logger;
 
 import org.newdawn.slick.util.pathfinding.Mover;
 import org.newdawn.slick.util.pathfinding.Path;
 import org.newdawn.slick.util.pathfinding.Path.Step;
+import org.slf4j.LoggerFactory;
+
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
@@ -18,7 +21,8 @@ import sim.util.geo.PointMoveTo;
 
 
 public class RoomAgent implements Steppable, Mover{
-
+	
+	private final static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(RoomAgent.class);
 
     private static final long serialVersionUID = -5318720825474063385L;
 
@@ -33,24 +37,24 @@ public class RoomAgent implements Steppable, Mover{
     GeomVectorField accessableArea = null;
     private PointMoveTo pointMoveTo = new PointMoveTo();
     private int step = 0;
-    public RoomAgent(Stadium stadium){
+    private int id;
+    
+    public RoomAgent(int id, Stadium stadium){
        	this.stadium = stadium;
+       	this.id = id;
     }
 		
-
-    
     public void step(SimState state){
         //weiter gehts
     	setStateDependingOnStadium(state);
     	int x = (int) location.getX();
     	int y = (int) location.getY();
     	moveAgent(state);
-  
     }
 
     private void moveAgent(SimState state){
     	if (step >= pathAsTileList.size()-1){
-    		System.out.println("Agent hat Ziel erreicht");
+    		LOGGER.info("Agent {} hat Ziel erreicht",this);
     		return;
     	}
     	Tile actTile = pathAsTileList.get(step);
@@ -58,9 +62,7 @@ public class RoomAgent implements Steppable, Mover{
     		actTile.addRoomAgent(this);
     	}
     	Tile nextTile = pathAsTileList.get(step+1);
-    	double nextX = nextTile.getX() + Math.floor(roomState.movingSpace.getMBR().getMinX());
-    	double nextY = nextTile.getY() + Math.floor(roomState.movingSpace.getMBR().getMinY());
-    	Coordinate coord = new Coordinate((nextX), (nextY));
+    	Coordinate coord = roomState.getCoordForTile(nextTile);
     	if (nextTile.getRoomAgentList().isEmpty()){
     		moveTo(coord);
         	step++;
@@ -70,8 +72,6 @@ public class RoomAgent implements Steppable, Mover{
     		Path p = roomState.calcNewPath(this, actTile, pathAsTileList.get(pathAsTileList.size()-1));
     		this.setPath(state, path);
     	}
-    	
-    	
     }
     
 	/**
@@ -144,4 +144,16 @@ public class RoomAgent implements Steppable, Mover{
     public Geometry getGeometry(){ 
     	return location;
     }
+    
+    
+
+	@Override
+	public String toString() {
+		return String.format("RoomAgent [location=%s, moveRate=%s, id=%s]",
+				location, moveRate, id);
+	}
+
+	public int getId() {
+		return id;
+	}
 }

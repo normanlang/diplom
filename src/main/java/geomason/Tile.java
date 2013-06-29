@@ -2,6 +2,9 @@ package geomason;
 
 import java.util.ArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import sim.util.geo.MasonGeometry;
 
 import com.vividsolutions.jts.algorithm.ConvexHull;
@@ -25,6 +28,8 @@ public class Tile extends MasonGeometry{
 	private boolean usable = false;
 	private Polygon polygon = null;
 	private int x,y;
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(Tile.class);
 	
 	public Tile(int x, int y) {
 		super();
@@ -53,7 +58,6 @@ public class Tile extends MasonGeometry{
 	
 	public void addAgent(Agent a){
 		agentList.add(a);
-		
 	}
 	
 	public void addAgents(ArrayList<Agent> al){
@@ -96,7 +100,7 @@ public class Tile extends MasonGeometry{
 	//für room
 	public void addRoomAgent(RoomAgent a){
 		roomAgentList.add(a);
-		
+		LOGGER.info("Roomagent mit ID {} zu {} hinzugefügt", a.getId(),this);
 	}
 	
 	public void addRoomAgents(ArrayList<RoomAgent> ral){
@@ -115,6 +119,13 @@ public class Tile extends MasonGeometry{
 	 */
 	public ArrayList<RoomAgent> getRoomAgentList() {
 		return roomAgentList;
+	}
+
+	@Override
+	public String toString() {
+		return String
+				.format("Tile [agentList=%s, roomAgentList=%s, usable=%s, polygon=%s, x=%s, y=%s]",
+						agentList, roomAgentList, usable, polygon, x, y);
 	}
 	
 }

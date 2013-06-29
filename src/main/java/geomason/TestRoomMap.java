@@ -37,8 +37,8 @@ public class TestRoomMap implements TileBasedMap {
 	
 	public TestRoomMap(Room state){
 		room = state;
-		width = room.getWidthinTiles();
-		height = room.getHeightinTiles();
+		width = room.getWidthInTiles();
+		height = room.getHeightInTiles();
 		//hole minX u. minY zur Berechnung des "Mapursprungs"
 		minX = (int) Math.floor(room.movingSpace.getMBR().getMinX()); 
 		minY = (int) Math.floor(room.movingSpace.getMBR().getMinY());
@@ -55,9 +55,9 @@ public class TestRoomMap implements TileBasedMap {
 				
 				//baue ein Polygon was das Tile darstellen soll als Quadrat mit einer Kantenlänge von 1m
 				Coordinate p1 = new Coordinate(xTile, yTile);
-				Coordinate p2 = new Coordinate(xTile + 1, yTile);
-				Coordinate p3 = new Coordinate(xTile, yTile + 1);
-				Coordinate p4 = new Coordinate(xTile+ 1, yTile+ 1);
+				Coordinate p2 = new Coordinate(xTile + Room.TILESIZE, yTile);
+				Coordinate p3 = new Coordinate(xTile, yTile + Room.TILESIZE);
+				Coordinate p4 = new Coordinate(xTile+ Room.TILESIZE, yTile+ Room.TILESIZE);
 				Coordinate[] points = {p1, p2, p3, p4, p1};
 				LinearRing lr = new GeometryFactory().createLinearRing(points);
 				Polygon poly = new GeometryFactory().createPolygon(lr);
@@ -138,13 +138,7 @@ public class TestRoomMap implements TileBasedMap {
 
 	public boolean blocked(Mover mover, int x, int y) {
 		Tile t = map[x][y];
-		/*if (t.getAgentList().isEmpty()){
-			return false;
-		} else return true;*/
-		//ab hier neu
-		double posX = t.getX() + Math.floor(room.movingSpace.getMBR().getMinX());
-		double posY = t.getY() + Math.floor(room.movingSpace.getMBR().getMinY());
-		Coordinate coord = new Coordinate(posX, posY);
+		Coordinate coord = room.getCoordForTile(t);
 		if (room.movingSpace.isCovered(coord) && t.getAgentList().isEmpty()){
 			return false;
 		} else return true;
