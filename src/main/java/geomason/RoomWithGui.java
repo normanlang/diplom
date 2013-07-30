@@ -19,6 +19,7 @@ public class RoomWithGui extends GUIState{
     JFrame displayFrame;
     GeomVectorFieldPortrayal movingSpacePortrayal = new GeomVectorFieldPortrayal();
     GeomVectorFieldPortrayal agentPortrayal = new GeomVectorFieldPortrayal();
+    GeomVectorFieldPortrayal obstaclePortrayal = new GeomVectorFieldPortrayal();
 
     public RoomWithGui(SimState state) {
 		super(state);
@@ -35,6 +36,7 @@ public class RoomWithGui extends GUIState{
         display = new Display2D(Room.WIDTH, Room.HEIGHT, this);
         display.attach(movingSpacePortrayal, "Bewegungsraum");
         display.attach(agentPortrayal, "Agenten");
+        display.attach(obstaclePortrayal, "Hindernisse");
         displayFrame = display.createFrame();
         controller.registerFrame(displayFrame);
         displayFrame.setVisible(true);
@@ -47,6 +49,8 @@ public class RoomWithGui extends GUIState{
         agentPortrayal.setPortrayalForAll(new OvalPortrayal2D(Color.RED, 4.0)); 
         movingSpacePortrayal.setField(roomState.movingSpace);
         movingSpacePortrayal.setPortrayalForAll(new GeomPortrayal(Color.GRAY,true));
+        obstaclePortrayal.setField(roomState.obstacles);
+        obstaclePortrayal.setPortrayalForAll(new GeomPortrayal(Color.BLACK,true));
         display.reset();
         display.setBackdrop(Color.WHITE);
         display.repaint();

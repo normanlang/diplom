@@ -7,7 +7,9 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.CoordinateSequence;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.LinearRing;
+import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 
 import sim.field.geo.GeomVectorField;
@@ -48,35 +50,37 @@ public class TestRoomMap implements TileBasedMap {
 	}
 
 	private void buildRoomMap() {
-		int xTile = (int) Math.floor(minX);
-		int yTile = (int) Math.floor(minY);
+		double xTile = Math.floor(minX);
+		double yTile = Math.floor(minY);
 		for (int i = 0; i< width; i++){
 			for(int j=0; j< height; j++){
 				
 				//baue ein Polygon was das Tile darstellen soll als Quadrat mit einer Kantenlänge von 1m
 				Coordinate p1 = new Coordinate(xTile, yTile);
 				Coordinate p2 = new Coordinate(xTile + Room.TILESIZE, yTile);
-				Coordinate p3 = new Coordinate(xTile, yTile + Room.TILESIZE);
-				Coordinate p4 = new Coordinate(xTile+ Room.TILESIZE, yTile+ Room.TILESIZE);
+				Coordinate p3 = new Coordinate(xTile+ Room.TILESIZE, yTile+ Room.TILESIZE);
+				Coordinate p4 = new Coordinate(xTile, yTile + Room.TILESIZE);
 				Coordinate[] points = {p1, p2, p3, p4, p1};
 				LinearRing lr = new GeometryFactory().createLinearRing(points);
 				Polygon poly = new GeometryFactory().createPolygon(lr);
 				Tile tile = new Tile(i,j);
 				tile.setPolygon(poly);
-				if (room.movingSpace.isCovered(tile)){
-					tile.setUsable(true);
-					System.out.println("i: "+i+" j: "+j);
-				}
+				testLineString(tile, poly, lr);
+				Bag obstacles = room.obstacles.getObjectsWithinDistance(poly, Room.TILESIZE);
+				if (!obstacles.isEmpty()){
+					tile.setUsable(false);
+					System.out.println("nicht leer");
+				} else tile.setUsable(true);
 				map[i][j] = tile;
 				//ändere die Höhe für das nächste Tile
-				yTile = yTile + 1;
+				yTile = yTile + Room.TILESIZE;
 			}
-			xTile = xTile + 1;
+			yTile = Math.floor(minY);
+			xTile = xTile + Room.TILESIZE;
 		}
 		
 	}
-	
-	
+			
 	private void buildMap() {
 		int xTile = (int) Math.floor(minX);
 		int yTile = (int) Math.floor(minY);
@@ -139,7 +143,7 @@ public class TestRoomMap implements TileBasedMap {
 	public boolean blocked(Mover mover, int x, int y) {
 		Tile t = map[x][y];
 		Coordinate coord = room.getCoordForTile(t);
-		if (room.movingSpace.isCovered(coord) && t.getAgentList().isEmpty()){
+		if (room.movingSpace.isCovered(coord) && t.getAgentList().isEmpty() && t.isUsable()){
 			return false;
 		} else return true;
 	}
@@ -148,5 +152,25 @@ public class TestRoomMap implements TileBasedMap {
 		// TODO Auto-generated method stub
 		return 1;
 	}
+	
+	private void testLineString(Tile tile, Polygon poly, LinearRing lr) {
+		Bag obstcls = room.obstacles.getGeometries();
+		MasonGeometry mg = (MasonGeometry) obstcls.get(0);
+		LineString l = (LineString) mg.getGeometry();
+		Point p = l.getStartPoint();
+		Point p1 = l.getEndPoint();
+		if (tile.getX() == 405551-(int) Math.floor(room.movingSpace.getMBR().getMinX()) &&  tile.getY() == 5754219-(int)Math.floor(room.movingSpace.getMBR().getMinY())){
+			System.out.println("Poly- covers:"+mg.getGeometry().covers(poly)+" distanz: "+mg.getGeometry().distance(poly)+" contains:"
+					+mg.getGeometry().contains(poly)+" intersects:"+mg.getGeometry().intersects(poly));
+			System.out.println("Poly- covers:"+mg.getGeometry().covers(lr)+" distanz: "+mg.getGeometry().distance(lr)+" contains:"
+								+mg.getGeometry().contains(lr)+" intersects:"+mg.getGeometry().intersects(lr));
+		}
+		if (tile.getX() == 405575-(int) Math.floor(room.movingSpace.getMBR().getMinX()) && tile.getY() == 5754209-(int) Math.floor(room.movingSpace.getMBR().getMinY())){
+			System.out.println("Poly- covers:"+mg.getGeometry().covers(poly)+" distanz: "+mg.getGeometry().distance(poly)+" contains:"
+					+mg.getGeometry().contains(poly)+" intersects:"+mg.getGeometry().intersects(poly));
+			System.out.println("Poly- covers:"+mg.getGeometry().covers(lr)+" distanz: "+mg.getGeometry().distance(lr)+" contains:"
+								+mg.getGeometry().contains(lr)+" intersects:"+mg.getGeometry().intersects(lr));
+		}
 
+	}
 }

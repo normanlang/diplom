@@ -40,6 +40,7 @@ public class Tile extends MasonGeometry{
 	public void setPolygon(Polygon p){
 		polygon = p;
 		polygon.convexHull();
+		this.geometry = p;
 	}
 	
 	public Geometry getGeometry(){
@@ -100,7 +101,7 @@ public class Tile extends MasonGeometry{
 	//für room
 	public void addRoomAgent(RoomAgent a){
 		roomAgentList.add(a);
-		LOGGER.info("Roomagent mit ID {} zu {} hinzugefügt", a.getId(),this);
+		//LOGGER.info("Roomagent mit ID {} zu {} hinzugefügt", a.getId(),this);
 	}
 	
 	public void addRoomAgents(ArrayList<RoomAgent> ral){

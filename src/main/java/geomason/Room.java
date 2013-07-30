@@ -31,6 +31,7 @@ public class Room extends SimState{
 	    public static int NUM_AGENTS = 20;
 	    public static GeomVectorField agents = new GeomVectorField(WIDTH, HEIGHT);   
 	    public GeomVectorField movingSpace = new GeomVectorField(WIDTH, HEIGHT);
+	    public GeomVectorField obstacles = new GeomVectorField(WIDTH, HEIGHT);
 	    private TestRoomMap map;
 	    public double dmax = 15.0;
 	    
@@ -49,7 +50,7 @@ public class Room extends SimState{
 		        	//lege startkoordinaten fest
 		        	int xs = 405496, ys = 5754179;
 		        	//lege zielkoordinaten fest
-		        	int xd = 405583, yd = 5754210;
+		        	int xd = 405574, yd = 5754222;
 		        	//hole die entsprechenden tiles
 		        	RoomAgent a = new RoomAgent(i, Stadium.TEST);
 		        	int d = i%10;
@@ -74,6 +75,7 @@ public class Room extends SimState{
 			private void loadData(){
 	        // url für die vektordaten der Zonen und des Bewegungsraums
 			URL testRoomBoundaries = TestRoomWithObstacle.class.getResource("data/movingSpace-testroom.shp");
+			URL obstacleBoundaries = TestRoomWithObstacle.class.getResource("data/hindernisse.shp");
 	        Bag movingSpaceAttributes = new Bag();
 	        movingSpaceAttributes.add("Art");     
 	        //lese vom Vektorlayer noch Attribute aus der shp-Datei aus
@@ -82,11 +84,14 @@ public class Room extends SimState{
 		        //lese den vector-layer des Raums und der Zonen ein
 		        System.out.println("lese die Vektordaten ein...");
 	            ShapeFileImporter.read(testRoomBoundaries, movingSpace, movingSpaceAttributes, MasonGeometryBlock.class);
+	            ShapeFileImporter.read(obstacleBoundaries, obstacles);
 	        } catch (FileNotFoundException ex){
 	            System.out.println("ShapeFile import failed");
 	        }
 			//sicher stellen, dass beide das gleiche minimum bounding rectangle(mbr) haben
 			Envelope MBR = movingSpace.getMBR();
+			obstacles.setMBR(MBR);
+			obstacles.computeConvexHull();
 			movingSpace.computeConvexHull();
 		}
 		
@@ -153,10 +158,11 @@ public class Room extends SimState{
 			int destX = end.getX(), destY = end.getY();
 	        int maxNodes = getWidthInTiles() * getHeightInTiles();
 			PathFinder find = new AStarPathFinder(map, maxNodes, true);
-			if (find.findPath(a,actX, actY, destX, destY) == null){
+			Path newPath = find.findPath(a,actX, actY, destX, destY); 
+			if ( newPath == null){
 				System.err.println("Keinen Pfad gefunden");
 			}
-			return find.findPath(a,actX, actY, destX, destY); 
+			return newPath; 
 		}
 		
 		// Methoden für UI und main
