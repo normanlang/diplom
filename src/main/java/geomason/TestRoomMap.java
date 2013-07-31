@@ -1,5 +1,7 @@
 package geomason;
 
+import java.math.BigDecimal;
+
 import org.newdawn.slick.util.pathfinding.Mover;
 import org.newdawn.slick.util.pathfinding.TileBasedMap;
 
@@ -53,27 +55,39 @@ public class TestRoomMap implements TileBasedMap {
 		double xTile = Math.floor(minX);
 		double yTile = Math.floor(minY);
 		for (int i = 0; i< width; i++){
+			//um Rundungsfehler und die Ungenauigkeit von Double auszuschliessen wird mit
+			//BigDecimal gearbeitet
+			
+			//double in BigDec umwandeln
+			BigDecimal tmpx = BigDecimal.valueOf(xTile); 
+			//auf 2 Kommastellen reduzieren und wenn nötig runden
+			BigDecimal newx = tmpx.setScale(2, BigDecimal.ROUND_HALF_UP);
+			//tilesize hinzu addieren
+			newx = newx.add(BigDecimal.valueOf(Room.TILESIZE)); //tilesize hinzuaddieren
+			//das ergebnis auf eine Nachkommastelle reduzieren und daraus ein double machen
+			double xnew = newx.setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue(); 
 			for(int j=0; j< height; j++){
-				
+				BigDecimal tmpy = BigDecimal.valueOf(yTile);
+				BigDecimal newy = tmpy.setScale(2, BigDecimal.ROUND_HALF_UP);
+				newy = newy.add(BigDecimal.valueOf(Room.TILESIZE));
+				double ynew = newy.setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue();
 				//baue ein Polygon was das Tile darstellen soll als Quadrat mit einer Kantenlänge von 1m
 				Coordinate p1 = new Coordinate(xTile, yTile);
-				Coordinate p2 = new Coordinate(xTile + Room.TILESIZE, yTile);
-				Coordinate p3 = new Coordinate(xTile+ Room.TILESIZE, yTile+ Room.TILESIZE);
-				Coordinate p4 = new Coordinate(xTile, yTile + Room.TILESIZE);
+				Coordinate p2 = new Coordinate(xnew, yTile);
+				Coordinate p3 = new Coordinate(xnew, ynew);
+				Coordinate p4 = new Coordinate(xTile, ynew);
 				Coordinate[] points = {p1, p2, p3, p4, p1};
 				LinearRing lr = new GeometryFactory().createLinearRing(points);
 				Polygon poly = new GeometryFactory().createPolygon(lr);
 				Tile tile = new Tile(i,j);
 				tile.setPolygon(poly);
-				testLineString(tile, poly, lr);
 				Bag obstacles = room.obstacles.getObjectsWithinDistance(poly, Room.TILESIZE);
 				if (!obstacles.isEmpty()){
 					tile.setUsable(false);
-					System.out.println("nicht leer");
 				} else tile.setUsable(true);
 				map[i][j] = tile;
 				//ändere die Höhe für das nächste Tile
-				yTile = yTile + Room.TILESIZE;
+				yTile = ynew;
 			}
 			yTile = Math.floor(minY);
 			xTile = xTile + Room.TILESIZE;
@@ -151,26 +165,5 @@ public class TestRoomMap implements TileBasedMap {
 	public float getCost(Mover mover, int sx, int sy, int tx, int ty) {
 		// TODO Auto-generated method stub
 		return 1;
-	}
-	
-	private void testLineString(Tile tile, Polygon poly, LinearRing lr) {
-		Bag obstcls = room.obstacles.getGeometries();
-		MasonGeometry mg = (MasonGeometry) obstcls.get(0);
-		LineString l = (LineString) mg.getGeometry();
-		Point p = l.getStartPoint();
-		Point p1 = l.getEndPoint();
-		if (tile.getX() == 405551-(int) Math.floor(room.movingSpace.getMBR().getMinX()) &&  tile.getY() == 5754219-(int)Math.floor(room.movingSpace.getMBR().getMinY())){
-			System.out.println("Poly- covers:"+mg.getGeometry().covers(poly)+" distanz: "+mg.getGeometry().distance(poly)+" contains:"
-					+mg.getGeometry().contains(poly)+" intersects:"+mg.getGeometry().intersects(poly));
-			System.out.println("Poly- covers:"+mg.getGeometry().covers(lr)+" distanz: "+mg.getGeometry().distance(lr)+" contains:"
-								+mg.getGeometry().contains(lr)+" intersects:"+mg.getGeometry().intersects(lr));
-		}
-		if (tile.getX() == 405575-(int) Math.floor(room.movingSpace.getMBR().getMinX()) && tile.getY() == 5754209-(int) Math.floor(room.movingSpace.getMBR().getMinY())){
-			System.out.println("Poly- covers:"+mg.getGeometry().covers(poly)+" distanz: "+mg.getGeometry().distance(poly)+" contains:"
-					+mg.getGeometry().contains(poly)+" intersects:"+mg.getGeometry().intersects(poly));
-			System.out.println("Poly- covers:"+mg.getGeometry().covers(lr)+" distanz: "+mg.getGeometry().distance(lr)+" contains:"
-								+mg.getGeometry().contains(lr)+" intersects:"+mg.getGeometry().intersects(lr));
-		}
-
 	}
 }

@@ -27,7 +27,7 @@ public class RoomAgent implements Steppable, Mover{
     private static final long serialVersionUID = -5318720825474063385L;
 
     public Point location = null; 
-    public double moveRate = 0.5;
+    public int moveRate;
     public static enum Stadium {PREUSSEN,TEST,ESPRIT};
     private Stadium stadium;
     private Path path;
@@ -38,10 +38,12 @@ public class RoomAgent implements Steppable, Mover{
     private PointMoveTo pointMoveTo = new PointMoveTo();
     private int step = 0;
     private int id;
+    private boolean reached = false;
     
-    public RoomAgent(int id, Stadium stadium){
+    public RoomAgent(int id, Stadium stadium, int moveRate){
        	this.stadium = stadium;
        	this.id = id;
+       	this.moveRate = moveRate;
     }
 		
     public void step(SimState state){
@@ -53,19 +55,24 @@ public class RoomAgent implements Steppable, Mover{
     }
 
     private void moveAgent(SimState state){
-    	if (step >= pathAsTileList.size()-1){
+    	if (step >= pathAsTileList.size()-1 && reached==false){
     		LOGGER.info("Agent {} hat Ziel erreicht",this);
+    		reached = true;
     		return;
     	}
     	Tile actTile = pathAsTileList.get(step);
     	if (actTile.getRoomAgentList().contains(this) == false){
     		actTile.addRoomAgent(this);
     	}
-    	Tile nextTile = pathAsTileList.get(step+1);
+    	Tile nextTile;
+    	if (step+moveRate>pathAsTileList.size()-1){
+    		nextTile = pathAsTileList.get(pathAsTileList.size()-1);
+    		step = pathAsTileList.size();
+    	} else nextTile = pathAsTileList.get(step+moveRate);
     	Coordinate coord = roomState.getCoordForTile(nextTile);
     	if (nextTile.getRoomAgentList().isEmpty()){
     		moveTo(coord);
-        	step++;
+        	step = step + moveRate;
         	actTile.removeRoomAgent(this);
         	nextTile.addRoomAgent(this);
     	} else{

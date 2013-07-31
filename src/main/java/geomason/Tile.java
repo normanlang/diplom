@@ -1,6 +1,7 @@
 package geomason;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,8 @@ public class Tile extends MasonGeometry{
 	private boolean usable = false;
 	private Polygon polygon = null;
 	private int x,y;
+	private HashMap<Tile, Integer> destinations = new HashMap<Tile, Integer>();
+	
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(Tile.class);
 	
@@ -98,23 +101,17 @@ public class Tile extends MasonGeometry{
 		return b;
 	}
 	
+	
 	//für room
 	public void addRoomAgent(RoomAgent a){
 		roomAgentList.add(a);
 		//LOGGER.info("Roomagent mit ID {} zu {} hinzugefügt", a.getId(),this);
 	}
 	
-	public void addRoomAgents(ArrayList<RoomAgent> ral){
-		roomAgentList.addAll(ral);
-	}
 	public void removeRoomAgent(RoomAgent a){
 		roomAgentList.remove(a);
 	}
 	
-	public void removeRoomAgents(ArrayList<RoomAgent> ral){
-		roomAgentList.removeAll(ral);
-	}
-
 	/**
 	 * @return the agentList
 	 */
@@ -127,6 +124,20 @@ public class Tile extends MasonGeometry{
 		return String
 				.format("Tile [agentList=%s, roomAgentList=%s, usable=%s, polygon=%s, x=%s, y=%s]",
 						agentList, roomAgentList, usable, polygon, x, y);
+	}
+
+	/**
+	 * @return the destinations
+	 */
+	public HashMap<Tile, Integer> getDestinations() {
+		return destinations;
+	}
+
+	/**
+	 * @param destinations the destinations to set
+	 */
+	public void setDestinations(HashMap<Tile, Integer> destinations) {
+		this.destinations = destinations;
 	}
 	
 }

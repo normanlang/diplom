@@ -1,21 +1,15 @@
 package geomason;
 
+import examples.TestRoom;
 import geomason.RoomAgent.Stadium;
-
-import java.io.FileNotFoundException;
-import java.net.URL;
-
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
-
 import sim.engine.SimState;
 import sim.field.geo.GeomVectorField;
-import sim.io.geo.ShapeFileImporter;
 import sim.util.Bag;
 import sim.util.geo.MasonGeometry;
-
 import org.newdawn.slick.util.pathfinding.AStarPathFinder;
 import org.newdawn.slick.util.pathfinding.Path;
 import org.newdawn.slick.util.pathfinding.PathFinder;
@@ -28,20 +22,29 @@ public class Room extends SimState{
 		public static final double TILESIZE = 0.5;
 		public static final int WIDTH = 800; 
 		public static final int HEIGHT = 600;
-	    public static int NUM_AGENTS = 20;
+	    public static int NUM_AGENTS;
 	    public static GeomVectorField agents = new GeomVectorField(WIDTH, HEIGHT);   
-	    public GeomVectorField movingSpace = new GeomVectorField(WIDTH, HEIGHT);
-	    public GeomVectorField obstacles = new GeomVectorField(WIDTH, HEIGHT);
+	    public GeomVectorField movingSpace = new GeomVectorField();
+	    public GeomVectorField obstacles = new GeomVectorField();
+	    public GeomVectorField destinations = new GeomVectorField();
 	    private TestRoomMap map;
-	    public double dmax = 15.0;
 	    
 		public Room(long seed) {
 			super(seed);
-	        loadData();
+			loadTestRoomData();
 	        map = new TestRoomMap(this);
+	        createStaticFloorField();
 		}
 		
-		   private void addAgents(){
+		   private void loadTestRoomData() {
+			TestRoom testroom = new TestRoom(WIDTH,HEIGHT);
+			movingSpace = testroom.getMovingSpace();
+			obstacles = testroom.getObstacles();
+			destinations = testroom.getDestinations();
+			NUM_AGENTS = TestRoom.getNUM_AGENTS();
+		}
+
+		private void addAgents(){
 			   int e =0;
 		        for (int i = 0; i < NUM_AGENTS; i++){
 		        	if (movingSpace.getGeometries().isEmpty()){
@@ -51,8 +54,7 @@ public class Room extends SimState{
 		        	int xs = 405496, ys = 5754179;
 		        	//lege zielkoordinaten fest
 		        	int xd = 405574, yd = 5754222;
-		        	//hole die entsprechenden tiles
-		        	RoomAgent a = new RoomAgent(i, Stadium.TEST);
+		        	RoomAgent a = new RoomAgent(i, Stadium.TEST, random.nextInt(3)+1);
 		        	int d = i%10;
 		        	if (d==0) e++; 
 		        	Tile startTile = getTileByCoord(xs-e, ys+d);
@@ -71,32 +73,22 @@ public class Room extends SimState{
 		    }
 
 		    //grund- und hilfsfunktionen
-		    
-			private void loadData(){
-	        // url für die vektordaten der Zonen und des Bewegungsraums
-			URL testRoomBoundaries = TestRoomWithObstacle.class.getResource("data/movingSpace-testroom.shp");
-			URL obstacleBoundaries = TestRoomWithObstacle.class.getResource("data/hindernisse.shp");
-	        Bag movingSpaceAttributes = new Bag();
-	        movingSpaceAttributes.add("Art");     
-	        //lese vom Vektorlayer noch Attribute aus der shp-Datei aus
 
-			try{
-		        //lese den vector-layer des Raums und der Zonen ein
-		        System.out.println("lese die Vektordaten ein...");
-	            ShapeFileImporter.read(testRoomBoundaries, movingSpace, movingSpaceAttributes, MasonGeometryBlock.class);
-	            ShapeFileImporter.read(obstacleBoundaries, obstacles);
-	        } catch (FileNotFoundException ex){
-	            System.out.println("ShapeFile import failed");
-	        }
-			//sicher stellen, dass beide das gleiche minimum bounding rectangle(mbr) haben
-			Envelope MBR = movingSpace.getMBR();
-			obstacles.setMBR(MBR);
-			obstacles.computeConvexHull();
-			movingSpace.computeConvexHull();
+		private void createStaticFloorField() {
+			int width = getWidthInTiles();
+			int height = getHeightInTiles();
+			Bag allDestinations = new Bag();
+			for (int tx=0;tx< width; tx++){
+				for (int ty=0;ty<height; ty++){
+					Tile t = map.getTile(tx, ty);
+					allDestinations.addAll(destinations.getObjectsWithinDistance(t, TILESIZE));
+					allDestinations.removeMultiply(t);
+				}
+			}
+			System.out.println("");
+				
 		}
-		
 
-	    
 		public int getWidthInTiles(){
 			Envelope mbr = movingSpace.getMBR();
 			//stellt sicher dass die Länge der Fläche an tiles min. so gross ist wie die länge
