@@ -28,6 +28,7 @@ public class RoomAgent implements Steppable, Mover{
 
     public Point location = null; 
     public int moveRate;
+    public static final int fakeAgentID = 999999;
     public static enum Stadium {PREUSSEN,TEST,ESPRIT};
     private Stadium stadium;
     private Path path;
@@ -49,8 +50,6 @@ public class RoomAgent implements Steppable, Mover{
     public void step(SimState state){
         //weiter gehts
     	setStateDependingOnStadium(state);
-    	int x = (int) location.getX();
-    	int y = (int) location.getY();
     	moveAgent(state);
     }
 
@@ -61,8 +60,9 @@ public class RoomAgent implements Steppable, Mover{
     		return;
     	}
     	Tile actTile = pathAsTileList.get(step);
-    	if (actTile.getRoomAgentList().contains(this) == false){
-    		actTile.addRoomAgent(this);
+
+    	if (actTile.getPotentialAgentsList().contains(this) == false){
+    		actTile.addToPotentialList(this);
     	}
     	Tile nextTile;
     	if (step+moveRate>pathAsTileList.size()-1){
@@ -70,14 +70,26 @@ public class RoomAgent implements Steppable, Mover{
     		step = pathAsTileList.size();
     	} else nextTile = pathAsTileList.get(step+moveRate);
     	Coordinate coord = roomState.getCoordForTile(nextTile);
-    	if (nextTile.getRoomAgentList().isEmpty()){
+    	if (nextTile.getPotentialAgentsList().isEmpty()){
     		moveTo(coord);
         	step = step + moveRate;
-        	actTile.removeRoomAgent(this);
-        	nextTile.addRoomAgent(this);
+        	actTile.removeFromPotentialList(this);
+        	nextTile.addToPotentialList(this);
     	} else{
     		Path p = roomState.calcNewPath(this, actTile, pathAsTileList.get(pathAsTileList.size()-1));
-    		this.setPath(state, path);
+    		this.setPath(state, p);
+    		step = 0;
+    		if (step+moveRate>pathAsTileList.size()-1){
+        		nextTile = pathAsTileList.get(pathAsTileList.size()-1);
+        		step = pathAsTileList.size();
+        	} else nextTile = pathAsTileList.get(step+moveRate);
+        	Coordinate c = roomState.getCoordForTile(nextTile);
+        	if (nextTile.getPotentialAgentsList().isEmpty()){
+        		moveTo(c);
+            	step = step + moveRate;
+            	actTile.removeFromPotentialList(this);
+            	nextTile.addToPotentialList(this);
+        	}
     	}
     }
     

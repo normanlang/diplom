@@ -25,7 +25,7 @@ public class Tile extends MasonGeometry{
 	 */
 	private static final long serialVersionUID = -5161567811618409640L;
 	private ArrayList<Agent> agentList = new ArrayList<Agent>();
-	private ArrayList<RoomAgent> roomAgentList = new ArrayList<RoomAgent>();
+	private ArrayList<RoomAgent> potentialRoomAgentList = new ArrayList<RoomAgent>();
 	private boolean usable = false;
 	private Polygon polygon = null;
 	private int x,y;
@@ -103,27 +103,27 @@ public class Tile extends MasonGeometry{
 	
 	
 	//für room
-	public void addRoomAgent(RoomAgent a){
-		roomAgentList.add(a);
+	public void addToPotentialList(RoomAgent a){
+		potentialRoomAgentList.add(a);
 		//LOGGER.info("Roomagent mit ID {} zu {} hinzugefügt", a.getId(),this);
 	}
 	
-	public void removeRoomAgent(RoomAgent a){
-		roomAgentList.remove(a);
+	public void removeFromPotentialList(RoomAgent a){
+		potentialRoomAgentList.remove(a);
 	}
 	
 	/**
 	 * @return the agentList
 	 */
-	public ArrayList<RoomAgent> getRoomAgentList() {
-		return roomAgentList;
+	public ArrayList<RoomAgent> getPotentialAgentsList() {
+		return potentialRoomAgentList;
 	}
 
 	@Override
 	public String toString() {
 		return String
-				.format("Tile [agentList=%s, roomAgentList=%s, usable=%s, polygon=%s, x=%s, y=%s]",
-						agentList, roomAgentList, usable, polygon, x, y);
+				.format("Tile [agentList=%s, potentialRoomAgentList=%s, usable=%s, polygon=%s, x=%s, y=%s]",
+						agentList, potentialRoomAgentList, usable, polygon, x, y);
 	}
 
 	/**

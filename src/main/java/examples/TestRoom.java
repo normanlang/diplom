@@ -16,16 +16,17 @@ import sim.util.geo.MasonGeometry;
 public class TestRoom {
 	
 	
-    public static int NUM_AGENTS = 20;
-    private GeomVectorField movingSpace, obstacles, destinations;
+    public static int NUM_AGENTS = 150;
+    private GeomVectorField movingSpace, obstacles, destinations, starts;
     Envelope MBR;
     
     public TestRoom(int w, int h){
     	movingSpace = new GeomVectorField(w, h);
         obstacles = new GeomVectorField(w, h);
         destinations = new GeomVectorField(w, h);
+        starts = new GeomVectorField(w, h);
     	loadData();
-    	addDestinations();
+    	addStartsAndDestinations();
     }
     
 	private void loadData(){
@@ -52,8 +53,7 @@ public class TestRoom {
 		movingSpace.computeConvexHull();
 	}
 	
-	private void addDestinations() {
-//TODO: movingSpace clonen und dann darauf die Oeprationen durchführen, sonst sind die objekte weg
+	private void addStartsAndDestinations() {
 		Bag tmp = movingSpace.getGeometries();
 		Bag allMGBs = new Bag();
 		allMGBs.addAll(tmp);
@@ -62,6 +62,9 @@ public class TestRoom {
 			String name =  mgb.getStringAttribute("Art");
 			if (name.equalsIgnoreCase("evakuierung")) {
 				destinations.addGeometry(mgb);
+			}
+			if (name.equalsIgnoreCase("Block O")) {
+				starts.addGeometry(mgb);
 			}
 		}
 		
@@ -93,5 +96,12 @@ public class TestRoom {
 	 */
 	public GeomVectorField getDestinations() {
 		return destinations;
+	}
+
+	/**
+	 * @return the starts
+	 */
+	public GeomVectorField getStarts() {
+		return starts;
 	}
 }
