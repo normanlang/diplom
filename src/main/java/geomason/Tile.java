@@ -8,8 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import sim.util.geo.MasonGeometry;
 
-import com.vividsolutions.jts.algorithm.ConvexHull;
-import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
@@ -138,6 +136,10 @@ public class Tile extends MasonGeometry{
 	 */
 	public void setDestinations(HashMap<Tile, Integer> destinations) {
 		this.destinations = destinations;
+	}
+
+	public void addDestination(Tile tile, int length) {
+		destinations.put(tile, length);
 	}
 	
 }

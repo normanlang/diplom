@@ -6,12 +6,11 @@ import geomason.TestRoomWithObstacle;
 import java.io.FileNotFoundException;
 import java.net.URL;
 
-import com.vividsolutions.jts.geom.Envelope;
-
 import sim.field.geo.GeomVectorField;
 import sim.io.geo.ShapeFileImporter;
 import sim.util.Bag;
-import sim.util.geo.MasonGeometry;
+
+import com.vividsolutions.jts.geom.Envelope;
 
 public class TestRoomSmall {
 	

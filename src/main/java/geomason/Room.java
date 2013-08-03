@@ -1,23 +1,33 @@
 package geomason;
 
+import static geomason.TestRoomMap.STATIC_MAP_TILES_CSV;
 import examples.TestRoom;
 import examples.TestRoomSmall;
 import geomason.RoomAgent.Stadium;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.Point;
-import sim.engine.SimState;
-import sim.engine.Stoppable;
-import sim.field.geo.GeomVectorField;
-import sim.util.Bag;
-import sim.util.geo.MasonGeometry;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+
 import org.newdawn.slick.util.pathfinding.AStarPathFinder;
 import org.newdawn.slick.util.pathfinding.Mover;
 import org.newdawn.slick.util.pathfinding.Path;
 import org.newdawn.slick.util.pathfinding.PathFinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import sim.engine.SimState;
+import sim.engine.Stoppable;
+import sim.field.geo.GeomVectorField;
+import sim.util.Bag;
+import sim.util.geo.MasonGeometry;
+
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Envelope;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.Point;
 
 
 public class Room extends SimState{
@@ -46,7 +56,13 @@ public class Room extends SimState{
 	        map = new TestRoomMap(this);
 	        getAllDestinationsAndStartsTiles();
 	        getAllCenterTilesOfDestinations();
-	        //map.createStaticFloorField(allDestinationCenterTiles, Stadium.TEST);
+	        Stadium stadium = Stadium.TEST;
+	        if (!(new File(stadium.name() + STATIC_MAP_TILES_CSV).exists())){
+	        	LOGGER.trace("create static floor field");
+	        	map.createStaticFloorField(allDestinationCenterTiles, stadium);
+	        } else {
+	        	map.readStaticFloorField(stadium);
+	        }
 		}
 		
 		private void loadTestRoomSmallData() {

@@ -1,7 +1,9 @@
 package geomason;
 
 import java.awt.Color;
+
 import javax.swing.JFrame;
+
 import sim.display.Console;
 import sim.display.Controller;
 import sim.display.Display2D;
@@ -11,8 +13,6 @@ import sim.portrayal.geo.GeomPortrayal;
 import sim.portrayal.geo.GeomVectorFieldPortrayal;
 import sim.portrayal.simple.OvalPortrayal2D;
 import sim.util.Bag;
-import sim.util.geo.MasonGeometry;
-import sim.util.gui.SimpleColorMap;
 
 public class PreussenStadiumWithUI extends GUIState{
     Display2D display;

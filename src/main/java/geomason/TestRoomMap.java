@@ -2,30 +2,34 @@ package geomason;
 
 import static geomason.RoomAgent.fakeAgentID;
 
+import geomason.RoomAgent.Stadium;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.StringTokenizer;
 
 import org.newdawn.slick.util.pathfinding.Mover;
 import org.newdawn.slick.util.pathfinding.Path;
-import org.newdawn.slick.util.pathfinding.Path.Step;
 import org.newdawn.slick.util.pathfinding.TileBasedMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import sim.util.Bag;
+
 import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.CoordinateSequence;
-import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.LinearRing;
-import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 
-import sim.field.geo.GeomVectorField;
-import sim.util.Bag;
-import sim.util.geo.MasonGeometry;
+public class TestRoomMap implements TileBasedMap{
 
-public class TestRoomMap implements TileBasedMap {
+	public static final String STATIC_MAP_TILES_CSV = "static-map_tiles.csv";
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(TestRoomMap.class);
 	
@@ -33,9 +37,13 @@ public class TestRoomMap implements TileBasedMap {
 	private double minX, minY;
 	private Tile[][] map;
 	private boolean[][] visited; 
-	TestRoomWithObstacle testRoom;
-	Room room;
-	
+	private TestRoomWithObstacle testRoom;
+	private Room room;
+	private String tokenSep = ",";
+	private String blockSep = ";";
+
+	private boolean append = true;
+
 	public TestRoomMap(TestRoomWithObstacle state){
 		testRoom = state;
 		width = testRoom.getWidthinTiles();
@@ -47,6 +55,7 @@ public class TestRoomMap implements TileBasedMap {
 		visited = new boolean[width][height];
 		buildMap();
 	}
+	
 	
 	public TestRoomMap(Room state){
 		room = state;
@@ -131,6 +140,7 @@ public class TestRoomMap implements TileBasedMap {
 	
 	public void createStaticFloorField(Bag allDestinationCenterAsTiles, RoomAgent.Stadium stadium){
 		//gehe alle tiles der map durch
+		LOGGER.trace("Start processing tiles");
 		int x = 0;
 		RoomAgent a = new RoomAgent(fakeAgentID, stadium, 1, Integer.MAX_VALUE);
 		for (int tx=0;tx< width; tx++){
@@ -138,26 +148,61 @@ public class TestRoomMap implements TileBasedMap {
 				Bag dests  = new Bag();
 				dests.addAll(allDestinationCenterAsTiles);
 				HashMap<Tile, Integer> destinationsWithLength = new HashMap<Tile, Integer>(); 
-				Tile t = getTile(tx, ty);
-				if (t.isUsable()){
+				Tile currentTile = getTile(tx, ty);
+				if (currentTile.isUsable()){
 					while (!dests.isEmpty()){
 						Tile destTile = (Tile) dests.pop();
-						Path p = room.calcNewPath(a, t, destTile);
+						Path p = room.calcNewPath(a, currentTile, destTile);
 						if (p == null){
 							destinationsWithLength.put(destTile, Integer.MAX_VALUE);
-						} else destinationsWithLength.put(destTile, p.getLength());
+						} else{
+							destinationsWithLength.put(destTile, p.getLength());
+						}
 					}
-					t.setDestinations(destinationsWithLength);
+					currentTile.setDestinations(destinationsWithLength);
+					writeTileInformationToFile(stadium,currentTile);
 				}
 				x++;
 				if (x%100 == 0){
-					System.out.println(x);
+					LOGGER.trace("Processed {} tiles...",x);
 				}
 			}
 		}
-		
+		LOGGER.trace("Finished processing tiles.");
 	}
 	
+	private void writeTileInformationToFile(Stadium stadium, Tile currentTile) {
+		try {
+			FileWriter fw = new FileWriter(stadium.name() + STATIC_MAP_TILES_CSV,append);
+			fw.write(createLine(currentTile));
+			fw.flush();
+			fw.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+
+	private String createLine(Tile currentTile) {
+		StringBuilder builder = new StringBuilder();
+		builder.append(currentTile.getX());
+		builder.append(tokenSep);
+		builder.append(currentTile.getY());
+		builder.append(blockSep);
+		for (Tile destination : currentTile.getDestinations().keySet()) {
+			builder.append(destination.getX());
+			builder.append(tokenSep);
+			builder.append(destination.getY());
+			builder.append(tokenSep);
+			builder.append(currentTile.getDestinations().get(destination));
+			builder.append(blockSep);
+		}
+		builder.append("\n");
+		return builder.toString();
+	}
+
+
 	public int getWidthInTiles() {
 		return width;
 	}
@@ -207,5 +252,50 @@ public class TestRoomMap implements TileBasedMap {
 	public float getCost(Mover mover, int sx, int sy, int tx, int ty) {
 		// TODO Auto-generated method stub
 		return 1;
+	}
+
+
+	public void readStaticFloorField(Stadium stadium) {
+		BufferedReader br = null;
+		try {
+			FileReader fr = new FileReader(new File(stadium.name() + STATIC_MAP_TILES_CSV));
+			br = new BufferedReader(fr);
+			String line;
+			while ((line = br.readLine()) != null) {
+				StringTokenizer toki = new StringTokenizer(line, blockSep);
+				String tileCoords = toki.nextToken();
+				String[] coords = tileCoords.split(tokenSep);
+				int x = Integer.parseInt(coords[0]),
+						y = Integer.parseInt(coords[1]);
+				Tile t = map[x][y];
+				while (toki.hasMoreTokens()) {
+					processDestinationBlock(t,toki.nextToken());
+				}
+			}
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+
+	private void processDestinationBlock(Tile t, String nextToken) {
+		String[] tokens = nextToken.split(tokenSep);
+		int x = Integer.parseInt(tokens[0]),
+				y = Integer.parseInt(tokens[1]),
+				length = Integer.parseInt(tokens[2]);
+		t.addDestination(map[x][y],length);
 	}
 }
