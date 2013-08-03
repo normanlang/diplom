@@ -173,7 +173,7 @@ public class TestRoomMap implements TileBasedMap{
 	
 	private void writeTileInformationToFile(Stadium stadium, Tile currentTile) {
 		try {
-			FileWriter fw = new FileWriter(stadium.name() + STATIC_MAP_TILES_CSV,append);
+			FileWriter fw = new FileWriter(stadium.name() + "-" + STATIC_MAP_TILES_CSV,append);
 			fw.write(createLine(currentTile));
 			fw.flush();
 			fw.close();
@@ -258,7 +258,7 @@ public class TestRoomMap implements TileBasedMap{
 	public void readStaticFloorField(Stadium stadium) {
 		BufferedReader br = null;
 		try {
-			FileReader fr = new FileReader(new File(stadium.name() + STATIC_MAP_TILES_CSV));
+			FileReader fr = new FileReader(new File(stadium.name() + "-" + STATIC_MAP_TILES_CSV));
 			br = new BufferedReader(fr);
 			String line;
 			while ((line = br.readLine()) != null) {

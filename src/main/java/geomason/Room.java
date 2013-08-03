@@ -57,7 +57,7 @@ public class Room extends SimState{
 	        getAllDestinationsAndStartsTiles();
 	        getAllCenterTilesOfDestinations();
 	        Stadium stadium = Stadium.TEST;
-	        if (!(new File(stadium.name() + STATIC_MAP_TILES_CSV).exists())){
+	        if (!(new File(stadium.name() + "-" + STATIC_MAP_TILES_CSV).exists())){
 	        	LOGGER.trace("create static floor field");
 	        	map.createStaticFloorField(allDestinationCenterTiles, stadium);
 	        } else {
