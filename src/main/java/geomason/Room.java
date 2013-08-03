@@ -1,6 +1,7 @@
 package geomason;
 
 import examples.TestRoom;
+import examples.TestRoomSmall;
 import geomason.RoomAgent.Stadium;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
@@ -40,14 +41,24 @@ public class Room extends SimState{
 	    
 		public Room(long seed) {
 			super(seed);
-			loadTestRoomData();
+//			loadTestRoomData();
+			loadTestRoomSmallData();
 	        map = new TestRoomMap(this);
 	        getAllDestinationsAndStartsTiles();
 	        getAllCenterTilesOfDestinations();
 	        //map.createStaticFloorField(allDestinationCenterTiles, Stadium.TEST);
 		}
 		
-		   private void loadTestRoomData() {
+		private void loadTestRoomSmallData() {
+			TestRoomSmall testroomSmall = new TestRoomSmall(WIDTH,HEIGHT);
+			movingSpace = testroomSmall.getMovingSpace();
+			obstacles = testroomSmall.getObstacles();
+			destinations = testroomSmall.getDestinations();
+			NUM_AGENTS = TestRoomSmall.getNUM_AGENTS();
+			starts = testroomSmall.getStarts();
+			viewDistance = testroomSmall.getViewDistanceInTiles();
+		}
+		private void loadTestRoomData() {
 			TestRoom testroom = new TestRoom(WIDTH,HEIGHT);
 			movingSpace = testroom.getMovingSpace();
 			obstacles = testroom.getObstacles();
@@ -58,9 +69,9 @@ public class Room extends SimState{
 		}
 
 		private void addAgents(){
-			   int e =0;
 			   Bag tmpStarts = new Bag();
 			   tmpStarts.addAll(allTilesOfStarts);
+			   tmpStarts.shuffle(random);
 			   Bag tmpDests = new Bag();
 			   tmpDests.addAll(allDestinationCenterTiles);
 		        for (int i = 0; i < NUM_AGENTS; i++){
@@ -74,8 +85,6 @@ public class Room extends SimState{
 		        	Tile startTile = (Tile) tmpStarts.pop();
 		        	RoomAgent a = new RoomAgent(i, Stadium.TEST, random.nextInt(3)+1, generateRandomViewDist());
 		        	startTile.addToPotentialList(a);
-		        	//lege zielkoordinaten fest
-		        	//int xd = 405574, yd = 5754222;
 		        	Tile endTile = (Tile) tmpDests.get(random.nextInt(tmpDests.size()));
 		        	Path p = calcNewPath(a, startTile, endTile);
 		        	if (p!=null){
@@ -192,9 +201,6 @@ public class Room extends SimState{
 	        int maxNodes = getWidthInTiles() * getHeightInTiles();
 			PathFinder find = new AStarPathFinder(map, maxNodes, true);
 			Path newPath = find.findPath(a,actX, actY, destX, destY); 
-			if ( newPath == null && a.getId() != RoomAgent.fakeAgentID){
-				LOGGER.info("Keinen Pfad gefunden");
-			}
 			return newPath; 
 		}
 		

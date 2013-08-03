@@ -13,7 +13,7 @@ import sim.io.geo.ShapeFileImporter;
 import sim.util.Bag;
 import sim.util.geo.MasonGeometry;
 
-public class TestRoom {
+public class TestRoomSmall {
 	
 	
     public static int NUM_AGENTS = 150;
@@ -21,7 +21,7 @@ public class TestRoom {
     private GeomVectorField movingSpace, obstacles, destinations, starts;
     Envelope MBR;
     
-    public TestRoom(int w, int h){
+    public TestRoomSmall(int w, int h){
     	movingSpace = new GeomVectorField(w, h);
         obstacles = new GeomVectorField(w, h);
         destinations = new GeomVectorField(w, h);
@@ -32,8 +32,8 @@ public class TestRoom {
     
 	private void loadData(){
         // url für die vektordaten der Zonen und des Bewegungsraums
-		URL testRoomBoundaries = TestRoomWithObstacle.class.getResource("data/movingSpace-testroom.shp");
-		URL obstacleBoundaries = TestRoomWithObstacle.class.getResource("data/hindernisse.shp");
+		URL testRoomBoundaries = TestRoomWithObstacle.class.getResource("data/bewegungsraum.shp");
+		URL obstacleBoundaries = TestRoomWithObstacle.class.getResource("data/hindernisseklein.shp");
         Bag movingSpaceAttributes = new Bag();
         movingSpaceAttributes.add("Art");     
         //lese vom Vektorlayer noch Attribute aus der shp-Datei aus
@@ -61,10 +61,10 @@ public class TestRoom {
 		while (!allMGBs.isEmpty()){
 			MasonGeometryBlock mgb = (MasonGeometryBlock) allMGBs.pop();
 			String name =  mgb.getStringAttribute("Art");
-			if (name.equalsIgnoreCase("evakuierung")) {
+			if (name.equalsIgnoreCase("ziel1") || name.equalsIgnoreCase("ziel2") || name.equalsIgnoreCase("ziel3")) {
 				destinations.addGeometry(mgb);
 			}
-			if (name.equalsIgnoreCase("Block O")) {
+			if (name.equalsIgnoreCase("start")) {
 				starts.addGeometry(mgb);
 			}
 		}

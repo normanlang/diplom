@@ -82,43 +82,6 @@ public class RoomAgent implements Steppable, Mover{
     	Coordinate  coord = roomState.getCoordForTile(nextTile);
 		moveTo(coord);
 		step += moveRate;
-
-    	
-    	
-//    	Tile actTile = pathAsTileList.get(step);
-//
-//    	if (actTile.getPotentialAgentsList().contains(this) == false){
-//    		actTile.addToPotentialList(this);
-//    	}
-//    	Tile nextTile;
-//    	if (step+moveRate>pathAsTileList.size()-1){
-//    		nextTile = pathAsTileList.get(pathAsTileList.size()-1);
-//    		step = pathAsTileList.size();
-//    	} else {
-//    		nextTile = pathAsTileList.get(step+moveRate);
-//    	}
-//    	Coordinate coord = roomState.getCoordForTile(nextTile);
-//    	if (nextTile.getPotentialAgentsList().isEmpty()){
-//    		moveTo(coord);
-//        	step += moveRate;
-//        	actTile.removeFromPotentialList(this);
-//        	nextTile.addToPotentialList(this);
-//    	} else{
-//    		Path p = roomState.calcNewPath(this, actTile, pathAsTileList.get(pathAsTileList.size()-1));
-//    		setPath(state, p);
-//    		step = 0;
-//    		if (step+moveRate>pathAsTileList.size()-1){
-//        		nextTile = pathAsTileList.get(pathAsTileList.size()-1);
-//        		step = pathAsTileList.size();
-//        	} else nextTile = pathAsTileList.get(step+moveRate);
-//        	Coordinate c = roomState.getCoordForTile(nextTile);
-//        	if (nextTile.getPotentialAgentsList().isEmpty()){
-//        		moveTo(c);
-//            	step = step + moveRate;
-//            	actTile.removeFromPotentialList(this);
-//            	nextTile.addToPotentialList(this);
-//        	}
-//    	}
     }
 
 	private boolean isAnyTileInViewDistanceBlocked() {
