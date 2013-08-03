@@ -68,7 +68,7 @@ public class AStarPathFinder implements PathFinder {
 	 */
 	public Path findPath(Mover mover, int sx, int sy, int tx, int ty) {
 		// easy first check, if the destination is blocked, we can't get there
-		if (map.blocked(mover, tx, ty)) {
+		if (map.isBlocked(mover, tx, ty)) {
 			return null;
 		}
 		
@@ -252,7 +252,7 @@ public class AStarPathFinder implements PathFinder {
 		boolean invalid = (x < 0) || (y < 0) || (x >= map.getWidthInTiles()) || (y >= map.getHeightInTiles());
 		
 		if ((!invalid) && ((sx != x) || (sy != y))) {
-			invalid = map.blocked(mover, x, y);
+			invalid = map.isBlocked(mover, x, y);
 		}
 		
 		return !invalid;

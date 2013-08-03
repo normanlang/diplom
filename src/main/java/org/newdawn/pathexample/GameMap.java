@@ -130,9 +130,9 @@ public class GameMap implements TileBasedMap {
 	}
 	
 	/**
-	 * @see TileBasedMap#blocked(Mover, int, int)
+	 * @see TileBasedMap#isBlocked(Mover, int, int)
 	 */
-	public boolean blocked(Mover mover, int x, int y) {
+	public boolean isBlocked(Mover mover, int x, int y) {
 		// if theres a unit at the location, then it's blocked
 		if (getUnit(x,y) != 0) {
 			return true;

@@ -7,10 +7,12 @@ import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 import sim.engine.SimState;
+import sim.engine.Stoppable;
 import sim.field.geo.GeomVectorField;
 import sim.util.Bag;
 import sim.util.geo.MasonGeometry;
 import org.newdawn.slick.util.pathfinding.AStarPathFinder;
+import org.newdawn.slick.util.pathfinding.Mover;
 import org.newdawn.slick.util.pathfinding.Path;
 import org.newdawn.slick.util.pathfinding.PathFinder;
 import org.slf4j.Logger;
@@ -34,6 +36,7 @@ public class Room extends SimState{
 		private Bag allTilesOfStarts = new Bag();
 	    private TestRoomMap map;
 	    private Bag allDestinationCenterTiles = new Bag();
+	    private int viewDistance;
 	    
 		public Room(long seed) {
 			super(seed);
@@ -41,9 +44,7 @@ public class Room extends SimState{
 	        map = new TestRoomMap(this);
 	        getAllDestinationsAndStartsTiles();
 	        getAllCenterTilesOfDestinations();
-	        System.out.println("Erzeuge Static Floor Field");
 	        //map.createStaticFloorField(allDestinationCenterTiles, Stadium.TEST);
-	        System.out.println("");
 		}
 		
 		   private void loadTestRoomData() {
@@ -53,12 +54,15 @@ public class Room extends SimState{
 			destinations = testroom.getDestinations();
 			NUM_AGENTS = TestRoom.getNUM_AGENTS();
 			starts = testroom.getStarts();
+			viewDistance = testroom.getViewDistanceInTiles();
 		}
 
 		private void addAgents(){
 			   int e =0;
 			   Bag tmpStarts = new Bag();
 			   tmpStarts.addAll(allTilesOfStarts);
+			   Bag tmpDests = new Bag();
+			   tmpDests.addAll(allDestinationCenterTiles);
 		        for (int i = 0; i < NUM_AGENTS; i++){
 		        	if (movingSpace.getGeometries().isEmpty()){
 		        		throw new RuntimeException("No polygons found.");
@@ -68,10 +72,11 @@ public class Room extends SimState{
 		        		break;
 		        	}
 		        	Tile startTile = (Tile) tmpStarts.pop();
-		        	RoomAgent a = new RoomAgent(i, Stadium.TEST, random.nextInt(3)+1);
+		        	RoomAgent a = new RoomAgent(i, Stadium.TEST, random.nextInt(3)+1, generateRandomViewDist());
+		        	startTile.addToPotentialList(a);
 		        	//lege zielkoordinaten fest
-		        	int xd = 405574, yd = 5754222;
-		        	Tile endTile = getTileByCoord(xd, yd);
+		        	//int xd = 405574, yd = 5754222;
+		        	Tile endTile = (Tile) tmpDests.get(random.nextInt(tmpDests.size()));
 		        	Path p = calcNewPath(a, startTile, endTile);
 		        	if (p!=null){
 		        		a.setPath(this, p);
@@ -81,13 +86,13 @@ public class Room extends SimState{
 			    	MasonGeometry mg = new MasonGeometry(a.getGeometry());
 			    	mg.isMovable = true;
 	    			agents.addGeometry(mg);
-	                schedule.scheduleRepeating(a);
+	                Stoppable stoppable = schedule.scheduleRepeating(a);
+	                a.setStoppMe(stoppable);
 		        }        
 		    }
-
 		    //grund- und hilfsfunktionen
 		
-				
+
 		private Bag getAllCenterTilesOfDestinations(){
 			Bag tmp = new Bag(destinations.getGeometries());
 			Bag dests  = new Bag();
@@ -188,7 +193,7 @@ public class Room extends SimState{
 			PathFinder find = new AStarPathFinder(map, maxNodes, true);
 			Path newPath = find.findPath(a,actX, actY, destX, destY); 
 			if ( newPath == null && a.getId() != RoomAgent.fakeAgentID){
-				System.err.println("Keinen Pfad gefunden");
+				LOGGER.info("Keinen Pfad gefunden");
 			}
 			return newPath; 
 		}
@@ -231,6 +236,19 @@ public class Room extends SimState{
 			return allDestinationCenterTiles;
 		}
 
+		
+		private int generateRandomViewDist() {
+			int diff = random.nextInt(10);
+			if (random.nextBoolean()){
+				return viewDistance + diff; 
+			}
+			return viewDistance - diff;
+		}
+
+		public boolean isBlocked(Mover mover, Tile t) {
+			return map.isBlocked(mover, t.getX(), t.getY());
+			
+		}
 
 
 }

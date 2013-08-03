@@ -16,7 +16,8 @@ import sim.util.geo.MasonGeometry;
 public class TestRoom {
 	
 	
-    public static int NUM_AGENTS = 150;
+    public static int NUM_AGENTS = 10;
+    private int viewDistanceInTiles = 30; //in Tiles 
     private GeomVectorField movingSpace, obstacles, destinations, starts;
     Envelope MBR;
     
@@ -103,5 +104,12 @@ public class TestRoom {
 	 */
 	public GeomVectorField getStarts() {
 		return starts;
+	}
+
+	/**
+	 * @return the viewDistanceInTiles
+	 */
+	public int getViewDistanceInTiles() {
+		return viewDistanceInTiles;
 	}
 }

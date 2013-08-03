@@ -9,6 +9,8 @@ import org.newdawn.slick.util.pathfinding.Mover;
 import org.newdawn.slick.util.pathfinding.Path;
 import org.newdawn.slick.util.pathfinding.Path.Step;
 import org.newdawn.slick.util.pathfinding.TileBasedMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.CoordinateSequence;
@@ -25,6 +27,8 @@ import sim.util.geo.MasonGeometry;
 
 public class TestRoomMap implements TileBasedMap {
 
+	public static final Logger LOGGER = LoggerFactory.getLogger(TestRoomMap.class);
+	
 	private int width = 0, height = 0;
 	private double minX, minY;
 	private Tile[][] map;
@@ -128,7 +132,7 @@ public class TestRoomMap implements TileBasedMap {
 	public void createStaticFloorField(Bag allDestinationCenterAsTiles, RoomAgent.Stadium stadium){
 		//gehe alle tiles der map durch
 		int x = 0;
-		RoomAgent a = new RoomAgent(fakeAgentID, stadium, 1);
+		RoomAgent a = new RoomAgent(fakeAgentID, stadium, 1, Integer.MAX_VALUE);
 		for (int tx=0;tx< width; tx++){
 			for (int ty=0;ty<height; ty++){
 				Bag dests  = new Bag();
@@ -188,20 +192,15 @@ public class TestRoomMap implements TileBasedMap {
 		}
 	}
 
-	public boolean blocked(Mover mover, int x, int y) {
+	public boolean isBlocked(Mover mover, int x, int y) {
 		Tile t = map[x][y];
-		RoomAgent a = (RoomAgent) mover;
 		Coordinate coord = room.getCoordForTile(t);
-		if (room.movingSpace.isCovered(coord) && t.getAgentList().isEmpty() && t.isUsable()){
+		if (room.getAllDestinationCenterTiles().contains(t) && t.isUsable()){
 			return false;
-		}  
-		if (a.getPath() != null && room.movingSpace.isCovered(coord) && t.isUsable()){
-			Step step = a.getPath().getStep(a.getPath().getLength()-1);
-			if ( x == step.getX() && y == step.getY() && !(t.getAgentList().isEmpty())){
-				return false;
-			}
-			
 		}
+		if (room.movingSpace.isCovered(coord) && t.getPotentialAgentsList().isEmpty() && t.isUsable()){
+			return false;
+		} 
 		return true;
 	}
 

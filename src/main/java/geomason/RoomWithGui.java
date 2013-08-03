@@ -4,6 +4,9 @@ import java.awt.Color;
 
 import javax.swing.JFrame;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import sim.display.Console;
 import sim.display.Controller;
 import sim.display.Display2D;
@@ -20,10 +23,11 @@ public class RoomWithGui extends GUIState{
     GeomVectorFieldPortrayal movingSpacePortrayal = new GeomVectorFieldPortrayal();
     GeomVectorFieldPortrayal agentPortrayal = new GeomVectorFieldPortrayal();
     GeomVectorFieldPortrayal obstaclePortrayal = new GeomVectorFieldPortrayal();
+    
+    public static final Logger LOGGER = LoggerFactory.getLogger(RoomWithGui.class);
 
     public RoomWithGui(SimState state) {
 		super(state);
-		// TODO Auto-generated constructor stub
 	}
 
 	public RoomWithGui() {
@@ -45,7 +49,7 @@ public class RoomWithGui extends GUIState{
     private void setupPortrayals(){
         Room roomState = (Room) state;
         agentPortrayal.setField(Room.agents);
-        System.out.println("anzahl agenten: "+Room.agents.getGeometries().numObjs );
+        LOGGER.debug("anzahl agenten: {}",Room.agents.getGeometries().numObjs );
         agentPortrayal.setPortrayalForAll(new OvalPortrayal2D(Color.RED, 4.0)); 
         movingSpacePortrayal.setField(roomState.movingSpace);
         movingSpacePortrayal.setPortrayalForAll(new GeomPortrayal(Color.GRAY,true));
@@ -87,7 +91,5 @@ public class RoomWithGui extends GUIState{
     public Object getSimulationInspectedObject(){ 
     	return state; 
     }
-
-
 
 }
