@@ -12,11 +12,11 @@ import sim.util.Bag;
 
 import com.vividsolutions.jts.geom.Envelope;
 
-public class TestRoomSmall {
+public class TestRoomSmall implements RoomInterface{
 	
 	
-    public static int NUM_AGENTS = 150;
-    private int viewDistanceInTiles = 30; //in Tiles 
+    public final int NUM_AGENTS = 150;
+    private int maxMoveRate = 5; //in Tiles 
     private GeomVectorField movingSpace, obstacles, destinations, starts;
     Envelope MBR;
     
@@ -73,7 +73,7 @@ public class TestRoomSmall {
 	/**
 	 * @return the nUM_AGENTS
 	 */
-	public static int getNUM_AGENTS() {
+	public int getNUM_AGENTS() {
 		return NUM_AGENTS;
 	}
 
@@ -106,9 +106,9 @@ public class TestRoomSmall {
 	}
 
 	/**
-	 * @return the viewDistanceInTiles
+	 * @return the maxMoveRate
 	 */
-	public int getViewDistanceInTiles() {
-		return viewDistanceInTiles;
+	public int getMaxMoveRateInTiles() {
+		return maxMoveRate;
 	}
 }

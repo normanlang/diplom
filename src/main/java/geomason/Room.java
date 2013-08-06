@@ -10,6 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 
 import org.newdawn.slick.util.pathfinding.AStarPathFinder;
 import org.newdawn.slick.util.pathfinding.Mover;
@@ -37,17 +38,18 @@ public class Room extends SimState{
 		public static final double TILESIZE = 0.5;
 		public static final int WIDTH = 800; 
 		public static final int HEIGHT = 600;
-	    public static int NUM_AGENTS;
+	    public int NUM_AGENTS;
 	    public static GeomVectorField agents = new GeomVectorField(WIDTH, HEIGHT);   
 	    public GeomVectorField movingSpace = new GeomVectorField();
 	    public GeomVectorField obstacles = new GeomVectorField();
 	    public GeomVectorField destinations = new GeomVectorField();
 	    public GeomVectorField starts = new GeomVectorField();
+	    public GeomVectorField allTilesOfMap = new GeomVectorField();
 		private Bag allTilesOfDestinations = new Bag();
 		private Bag allTilesOfStarts = new Bag();
 	    private TestRoomMap map;
 	    private Bag allDestinationCenterTiles = new Bag();
-	    private int viewDistance;
+	    private int maxMoveRate;
 	    
 		public Room(long seed) {
 			super(seed);
@@ -63,6 +65,7 @@ public class Room extends SimState{
 	        } else {
 	        	map.readStaticFloorField(stadium);
 	        }
+	        System.out.println("");
 		}
 		
 		private void loadTestRoomSmallData() {
@@ -70,9 +73,9 @@ public class Room extends SimState{
 			movingSpace = testroomSmall.getMovingSpace();
 			obstacles = testroomSmall.getObstacles();
 			destinations = testroomSmall.getDestinations();
-			NUM_AGENTS = TestRoomSmall.getNUM_AGENTS();
+			NUM_AGENTS = testroomSmall.getNUM_AGENTS();
 			starts = testroomSmall.getStarts();
-			viewDistance = testroomSmall.getViewDistanceInTiles();
+			maxMoveRate = testroomSmall.getMaxMoveRateInTiles();
 		}
 		private void loadTestRoomData() {
 			TestRoom testroom = new TestRoom(WIDTH,HEIGHT);
@@ -81,7 +84,7 @@ public class Room extends SimState{
 			destinations = testroom.getDestinations();
 			NUM_AGENTS = TestRoom.getNUM_AGENTS();
 			starts = testroom.getStarts();
-			viewDistance = testroom.getViewDistanceInTiles();
+			maxMoveRate = testroom.getViewDistanceInTiles();
 		}
 
 		private void addAgents(){
@@ -99,9 +102,9 @@ public class Room extends SimState{
 		        		break;
 		        	}
 		        	Tile startTile = (Tile) tmpStarts.pop();
-		        	RoomAgent a = new RoomAgent(i, Stadium.TEST, random.nextInt(3)+1, generateRandomViewDist());
-		        	startTile.addToPotentialList(a);
 		        	Tile endTile = (Tile) tmpDests.get(random.nextInt(tmpDests.size()));
+		        	RoomAgent a = new RoomAgent(i, Stadium.TEST, generateRandomMoveRate(), maxMoveRate, endTile);
+		        	startTile.addToPotentialList(a);
 		        	Path p = calcNewPath(a, startTile, endTile);
 		        	if (p!=null){
 		        		a.setPath(this, p);
@@ -113,6 +116,8 @@ public class Room extends SimState{
 	    			agents.addGeometry(mg);
 	                Stoppable stoppable = schedule.scheduleRepeating(a);
 	                a.setStoppMe(stoppable);
+	                ArrayList<CostTile> test= a.getCostsForAgent();
+	                System.out.println("");
 		        }        
 		    }
 		    //grund- und hilfsfunktionen
@@ -259,17 +264,21 @@ public class Room extends SimState{
 		}
 
 		
-		private int generateRandomViewDist() {
-			int diff = random.nextInt(10);
-			if (random.nextBoolean()){
-				return viewDistance + diff; 
-			}
-			return viewDistance - diff;
+		private int generateRandomMoveRate() {
+			int diff = random.nextInt(maxMoveRate);
+			return maxMoveRate - diff;
 		}
 
 		public boolean isBlocked(Mover mover, Tile t) {
 			return map.isBlocked(mover, t.getX(), t.getY());
 			
+		}
+
+		/**
+		 * @return the maxMoveRate
+		 */
+		public int getMaxMoveRate() {
+			return maxMoveRate;
 		}
 
 

@@ -11,6 +11,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
@@ -61,6 +62,8 @@ public class TestRoomMap implements TileBasedMap{
 		room = state;
 		width = room.getWidthInTiles();
 		height = room.getHeightInTiles();
+		room.allTilesOfMap.setFieldHeight(height);
+		room.allTilesOfMap.setFieldHeight(width);
 		//hole minX u. minY zur Berechnung des "Mapursprungs"
 		minX = (int) Math.floor(room.movingSpace.getMBR().getMinX()); 
 		minY = (int) Math.floor(room.movingSpace.getMBR().getMinY());
@@ -100,10 +103,14 @@ public class TestRoomMap implements TileBasedMap{
 				Tile tile = new Tile(i,j);
 				tile.setPolygon(poly);
 				Bag obstacles = room.obstacles.getObjectsWithinDistance(poly, Room.TILESIZE);
-				if (!obstacles.isEmpty()){
+				Bag inMovingSpace = room.movingSpace.getObjectsWithinDistance(poly, Room.TILESIZE);
+				if (!obstacles.isEmpty() || inMovingSpace.isEmpty()){
 					tile.setUsable(false);
-				} else tile.setUsable(true);
+				} else if (!inMovingSpace.isEmpty()){
+					tile.setUsable(true);
+				}
 				map[i][j] = tile;
+				room.allTilesOfMap.addGeometry(tile);
 				//ändere die Höhe für das nächste Tile
 				yTile = ynew;
 			}
@@ -142,7 +149,7 @@ public class TestRoomMap implements TileBasedMap{
 		//gehe alle tiles der map durch
 		LOGGER.trace("Start processing tiles");
 		int x = 0;
-		RoomAgent a = new RoomAgent(fakeAgentID, stadium, 1, Integer.MAX_VALUE);
+		RoomAgent a = new RoomAgent(fakeAgentID, stadium, 1, Integer.MAX_VALUE, new Tile(0, 0)); //fakeAgent
 		for (int tx=0;tx< width; tx++){
 			for (int ty=0;ty<height; ty++){
 				Bag dests  = new Bag();
@@ -250,10 +257,45 @@ public class TestRoomMap implements TileBasedMap{
 	}
 
 	public float getCost(Mover mover, int sx, int sy, int tx, int ty) {
-		// TODO Auto-generated method stub
+		RoomAgent a = (RoomAgent) mover;
+		if (a.getId() == RoomAgent.fakeAgentID){
+			return 1;
+		}
+//		Tile targetTile = map[tx][ty];
+//		int costs = 1;
+//		Bag agents = getAgentsInMaxMoveRateDistance(targetTile);
+//		if (agents.isEmpty()){
+//			costs = getCostsfromAgentForTargetTile(tx, ty, costs, a);
+//		} else {
+//			for (Object o : agents){
+//				RoomAgent agent = (RoomAgent) o;
+//				costs = getCostsfromAgentForTargetTile(tx, ty, costs, agent);
+//			}
+//		}
+//		return costs;
 		return 1;
 	}
 
+
+	private int getCostsfromAgentForTargetTile(int tx, int ty, int costs,
+			RoomAgent agent) {
+		ArrayList<CostTile> costsList = agent.getCostsForAgent();
+		for (CostTile ct : costsList){
+			if (ct.getX()== tx && ct.getY() == ty){
+				costs = costs + ct.getCosts();
+			}
+		}
+		return costs;
+	}
+	private Bag getAgentsInMaxMoveRateDistance(Tile actTile) {
+		Bag agentBag = Room.agents.getObjectsWithinDistance(actTile, room.getMaxMoveRate()*Room.TILESIZE);	
+		return agentBag;
+	}
+	
+	private Bag getAgentsInMoveRateDistance(Tile actTile, RoomAgent a) {
+		Bag agentBag = Room.agents.getObjectsWithinDistance(actTile, a.getMoveRate()*Room.TILESIZE);	
+		return agentBag;
+	}
 
 	public void readStaticFloorField(Stadium stadium) {
 		BufferedReader br = null;
