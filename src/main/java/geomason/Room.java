@@ -6,10 +6,8 @@ import examples.TestRoomSmall;
 import geomason.RoomAgent.Stadium;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 
 import org.newdawn.slick.util.pathfinding.AStarPathFinder;
@@ -27,6 +25,7 @@ import sim.util.geo.MasonGeometry;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
+import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 
@@ -35,6 +34,7 @@ public class Room extends SimState{
 
 		private static final long serialVersionUID = -1430063512195387977L;
 		private static final Logger LOGGER = LoggerFactory.getLogger(Room.class);
+		public static final int OWNCOST = 1000;
 		public static final double TILESIZE = 0.5;
 		public static final int WIDTH = 800; 
 		public static final int HEIGHT = 600;
@@ -50,6 +50,9 @@ public class Room extends SimState{
 	    private TestRoomMap map;
 	    private Bag allDestinationCenterTiles = new Bag();
 	    private int maxMoveRate;
+	    private int maxPatience;
+	    private Results results; 
+	    private Bag standardCosts;
 	    
 		public Room(long seed) {
 			super(seed);
@@ -58,6 +61,7 @@ public class Room extends SimState{
 	        map = new TestRoomMap(this);
 	        getAllDestinationsAndStartsTiles();
 	        getAllCenterTilesOfDestinations();
+	        standardCosts = calcCostsWithoutInfluences((Tile) getAllCenterTilesOfDestinations().get(0), OWNCOST);
 	        Stadium stadium = Stadium.TEST;
 	        if (!(new File(stadium.name() + "-" + STATIC_MAP_TILES_CSV).exists())){
 	        	LOGGER.trace("create static floor field");
@@ -65,7 +69,6 @@ public class Room extends SimState{
 	        } else {
 	        	map.readStaticFloorField(stadium);
 	        }
-	        System.out.println("");
 		}
 		
 		private void loadTestRoomSmallData() {
@@ -76,15 +79,17 @@ public class Room extends SimState{
 			NUM_AGENTS = testroomSmall.getNUM_AGENTS();
 			starts = testroomSmall.getStarts();
 			maxMoveRate = testroomSmall.getMaxMoveRateInTiles();
+			maxPatience = testroomSmall.getMaxPatience();
 		}
 		private void loadTestRoomData() {
 			TestRoom testroom = new TestRoom(WIDTH,HEIGHT);
 			movingSpace = testroom.getMovingSpace();
 			obstacles = testroom.getObstacles();
 			destinations = testroom.getDestinations();
-			NUM_AGENTS = TestRoom.getNUM_AGENTS();
+			NUM_AGENTS = testroom.getNUM_AGENTS();
 			starts = testroom.getStarts();
-			maxMoveRate = testroom.getViewDistanceInTiles();
+			maxMoveRate = testroom.getMaxMoveRateInTiles();
+			maxPatience = testroom.getMaxPatience();
 		}
 
 		private void addAgents(){
@@ -103,21 +108,21 @@ public class Room extends SimState{
 		        	}
 		        	Tile startTile = (Tile) tmpStarts.pop();
 		        	Tile endTile = (Tile) tmpDests.get(random.nextInt(tmpDests.size()));
-		        	RoomAgent a = new RoomAgent(i, Stadium.TEST, generateRandomMoveRate(), maxMoveRate, endTile);
+		        	RoomAgent a = new RoomAgent(i, Stadium.TEST, generateRandomMoveRate(), maxMoveRate, maxPatience, endTile, results);
 		        	startTile.addToPotentialList(a);
-		        	Path p = calcNewPath(a, startTile, endTile);
-		        	if (p!=null){
-		        		a.setPath(this, p);
-		        	}
 		        	Point loc = new GeometryFactory().createPoint(getCoordForTile(startTile));
+//		        	Point locEnd = new GeometryFactory().createPoint(getCoordForTile(endTile));
 			    	a.setLocation(loc);
-			    	MasonGeometry mg = new MasonGeometry(a.getGeometry());
-			    	mg.isMovable = true;
-	    			agents.addGeometry(mg);
+//		        	Path p = calcNewPath(a, startTile, endTile);
+//		        	if (p!=null){
+//		        		a.setPath(this, p);
+//		        	}
+			    	a.isMovable = true;
+	    			agents.addGeometry(a);
 	                Stoppable stoppable = schedule.scheduleRepeating(a);
 	                a.setStoppMe(stoppable);
-	                ArrayList<CostTile> test= a.getCostsForAgent();
-	                System.out.println("");
+	               // LOGGER.info("--------------------------------------------");
+	                //LOGGER.info("Agent {}: Start={} Ende={}", a.getId(), loc.toText(), locEnd.toText());
 		        }        
 		    }
 		    //grund- und hilfsfunktionen
@@ -175,6 +180,58 @@ public class Room extends SimState{
 			return heightInTiles;
 		}
 		
+		public int getStandardCostsForTargetTile(Tile actualPosition, Tile targetTile, int costs) {
+			int x = targetTile.getX() - actualPosition.getX();
+			int y = targetTile.getY() - actualPosition.getY();
+			int i = (2*maxMoveRate+1) * (x+ maxMoveRate) + (y+ maxMoveRate);
+			CostTile costTile = (CostTile) standardCosts.get(i);
+			//Sicherheitsüberprüfung
+			if (costTile.getX()!=x || costTile.getY()!=y){
+				LOGGER.error("Fehler Kostenberechnung: actTile:({},{}),targetTile:({},{}) - i:{}",
+						actualPosition.getX(),
+						actualPosition.getY(),
+						targetTile.getX(),
+						targetTile.getY(),
+						i);
+			}
+			costs = costs + costTile.getCosts();
+			return costs;
+		}
+		
+		
+	    /**
+	     * @return {@link ArrayList} CostTile - Elemente die außerhalb der tile-map liegen kommen nicht vor
+	     */
+	    private Bag calcCostsWithoutInfluences(Tile actualPosition, int owncost){
+	        Bag bag = new Bag();
+	        int ax = 0;
+	        int ay = 0;
+	        for (int x=-maxMoveRate; x < maxMoveRate+1; x++){
+	        	for (int y=-maxMoveRate; y < maxMoveRate+1; y++){
+	        		if(x==0 && y==0){
+	        			CostTile ct = new CostTile(ax, ay, owncost);
+	        			bag.add(ct);
+	        			continue;
+	        		} 
+	        		Tile t = getTile(actualPosition.getX()+x, actualPosition.getY()+y);
+	        		//Berechnung von w nach gibbs-marskjös
+	        		Geometry actTilePoly = actualPosition.getGeometry();
+	        		Geometry targetTilePoly = t.getGeometry();
+	        		double distance = actTilePoly.getCentroid().distance(targetTilePoly.getCentroid());
+	        		BigDecimal dist = BigDecimal.valueOf(distance);
+	        		dist = dist.subtract(new BigDecimal("0.4"));
+	        		dist = dist.pow(2);
+	        		BigDecimal divisor = new BigDecimal("0.015");
+	        		divisor = divisor.add(dist);
+	        		BigDecimal w = new BigDecimal("1.0");
+	        		w = w.divide(divisor, RoundingMode.HALF_UP);
+	        		int costs = w.setScale(0, RoundingMode.HALF_UP).intValue();
+	        		CostTile costt = new CostTile(ax+x, ay+y, costs);
+	        		bag.add(costt);
+	        	}
+	        }
+	        return bag;
+	    }
 		
 		/**
 		 * gets the tile at position x,y
@@ -236,9 +293,13 @@ public class Room extends SimState{
 		@Override
 	    public void start(){
 	        super.start();
+	        results = new Results(NUM_AGENTS);
+	        Stoppable stoppable = schedule.scheduleRepeating(results);
+	        results.setStoppMe(stoppable);
 	        //entferne eventuell noch vorhandene Agenten
 	        agents.clear(); 
 	        //füge neue Agenten hinzu
+	        System.out.println("Füge Agenten hinzu...");
 	        addAgents();
 	        //setze den minimum bounding rectangle anhand des Bewegungsraums
 	        agents.setMBR(movingSpace.getMBR());
@@ -280,6 +341,5 @@ public class Room extends SimState{
 		public int getMaxMoveRate() {
 			return maxMoveRate;
 		}
-
 
 }

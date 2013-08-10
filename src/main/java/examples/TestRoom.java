@@ -6,18 +6,18 @@ import geomason.TestRoomWithObstacle;
 import java.io.FileNotFoundException;
 import java.net.URL;
 
-import com.vividsolutions.jts.geom.Envelope;
-
 import sim.field.geo.GeomVectorField;
 import sim.io.geo.ShapeFileImporter;
 import sim.util.Bag;
-import sim.util.geo.MasonGeometry;
 
-public class TestRoom {
+import com.vividsolutions.jts.geom.Envelope;
+
+public class TestRoom implements RoomInterface{
 	
 	
     public static int NUM_AGENTS = 150;
-    private int viewDistanceInTiles = 30; //in Tiles 
+    private int maxMoveRate = 4; //in Tiles 
+    private int maxPatience = 15;
     private GeomVectorField movingSpace, obstacles, destinations, starts;
     Envelope MBR;
     
@@ -74,7 +74,7 @@ public class TestRoom {
 	/**
 	 * @return the nUM_AGENTS
 	 */
-	public static int getNUM_AGENTS() {
+	public int getNUM_AGENTS() {
 		return NUM_AGENTS;
 	}
 
@@ -107,9 +107,16 @@ public class TestRoom {
 	}
 
 	/**
-	 * @return the viewDistanceInTiles
+	 * @return the maxMoveRate
 	 */
-	public int getViewDistanceInTiles() {
-		return viewDistanceInTiles;
+	public int getMaxMoveRateInTiles() {
+		return maxMoveRate;
+	}
+
+	/**
+	 * @return the maxPatience
+	 */
+	public int getMaxPatience() {
+		return maxPatience;
 	}
 }

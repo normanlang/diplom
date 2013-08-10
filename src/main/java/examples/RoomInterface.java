@@ -33,4 +33,9 @@ public interface RoomInterface {
 	 * @return the maxMoveRate
 	 */
 	public int getMaxMoveRateInTiles();
+	
+	/**
+	 * @return the maxPatience
+	 */
+	public int getMaxPatience();
 }
