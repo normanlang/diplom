@@ -3,6 +3,12 @@ package geomason;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.vividsolutions.jts.geom.Point;
 
 import sim.engine.SimState;
 import sim.engine.Steppable;
@@ -16,35 +22,54 @@ public class Display extends MasonGeometry implements Steppable{
 	 * 
 	 */
 	private static final long serialVersionUID = 7269345727875001691L;
-
+	private static final Logger LOGGER = LoggerFactory.getLogger(Display.class);
 	private ArrayList<Display> displayList = new ArrayList<Display>();
 	private Bag observingTiles = new Bag();
 	private int dangerIndex = 0;
     private Stoppable stoppMe;
+    private ArrayList<RoomAgent> agentlist = new ArrayList<RoomAgent>();
+    private HashMap<Tile, Integer> destinationList = new HashMap<Tile, Integer>();
 	
-	public Display(Bag observBag){
+	public Display(Bag observBag, Tile centerTile){
 		observingTiles = observBag;
+		destinationList = centerTile.getDestinations();
 
 	}
 	
 	public void step(SimState state) {
-		// TODO Auto-generated method stub
+		agentlist.clear();
 		dangerIndex = dangerInObservedTiles();
+		if (dangerIndex >= 5){
+			changeDestinationForRandomAgent(state);
+			
+		}
+	}
+
+	private void changeDestinationForRandomAgent(SimState state) {
+		//TODO wieviele sehen das display?
+		// alle agenten im bereich nachzählen wie oft welches ziel vorkommt? das rausnehmen und das nächst kürzere nehmen?
+		for (RoomAgent ra : agentlist){
+			
+		}
+		
+		RoomAgent a = agentlist.get(state.random.nextInt(agentlist.size()));
+		Tile agentTile = a.getPositionAsTile();
+		LOGGER.info("Dangerindex geändert für Agent {}", a.getId());
 	}
 
 	private int dangerInObservedTiles() {
-		int agents = 0;
+
 		for (Object o : observingTiles){
 			Tile t = (Tile) o;
 			if (!(t.getPotentialAgentsList().isEmpty())){
-				agents++;
+				agentlist.add(t.getPotentialAgentsList().get(0));
 			}
 		}
 		int tiles = observingTiles.size();
 		if (tiles == 0){
 			return 0;
 		}
-		BigDecimal tmp = BigDecimal.valueOf(agents);
+		BigDecimal tmp = BigDecimal.valueOf(agentlist.size());
 		tmp = tmp.divide(BigDecimal.valueOf(tiles), 2, RoundingMode.HALF_UP);
 		tmp = tmp.multiply(BigDecimal.TEN);
 		int dangerFromAgents = tmp.setScale(0, RoundingMode.HALF_UP).intValue();

@@ -325,6 +325,7 @@ public class Room extends SimState{
 			ArrayList<Display> displList = new ArrayList<Display>();
 			for (Object object : displays.getGeometries()){
 				Geometry g  = ((MasonGeometry) object).getGeometry();
+				Tile centerTile = getTileByCoord(g.getCentroid().getX(), g.getCentroid().getY());
 				Bag tilesOfMg = new Bag();
 				for (Object o : DisplayBag){
 		    		Tile t = (Tile) o;
@@ -334,7 +335,7 @@ public class Room extends SimState{
 		    			DisplayBag.remove(t);
 		    		}
 		    	}
-				Display d = new Display(tilesOfMg);
+				Display d = new Display(tilesOfMg, centerTile);
 	    		displList.add(d);
 	    		d.geometry = g;
 	    		Stoppable stoppable = schedule.scheduleRepeating(d);
