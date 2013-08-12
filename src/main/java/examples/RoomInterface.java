@@ -15,6 +15,11 @@ public interface RoomInterface {
 	public GeomVectorField getMovingSpace();
 
 	/**
+	 * @return the displays
+	 */	
+	public GeomVectorField getDisplays();
+
+	/**
 	 * @return the obstacles
 	 */
 	public GeomVectorField getObstacles();

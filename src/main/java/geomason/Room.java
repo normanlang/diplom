@@ -45,8 +45,10 @@ public class Room extends SimState{
 	    public GeomVectorField destinations = new GeomVectorField();
 	    public GeomVectorField starts = new GeomVectorField();
 	    public GeomVectorField allTilesOfMap = new GeomVectorField();
+	    public GeomVectorField displays = new GeomVectorField();
 		private Bag allTilesOfDestinations = new Bag();
 		private Bag allTilesOfStarts = new Bag();
+		private Bag allTilesOfDisplays = new Bag();
 	    private TestRoomMap map;
 	    private Bag allDestinationCenterTiles = new Bag();
 	    private int maxMoveRate;
@@ -61,6 +63,7 @@ public class Room extends SimState{
 	        map = new TestRoomMap(this);
 	        getAllDestinationsAndStartsTiles();
 	        getAllCenterTilesOfDestinations();
+	        getAllTilesOfDisplays();
 	        standardCosts = calcCostsWithoutInfluences((Tile) getAllCenterTilesOfDestinations().get(0), OWNCOST);
 	        Stadium stadium = Stadium.TEST;
 	        if (!(new File(stadium.name() + "-" + STATIC_MAP_TILES_CSV).exists())){
@@ -80,6 +83,7 @@ public class Room extends SimState{
 			starts = testroomSmall.getStarts();
 			maxMoveRate = testroomSmall.getMaxMoveRateInTiles();
 			maxPatience = testroomSmall.getMaxPatience();
+			displays = testroomSmall.getDisplays();
 		}
 		private void loadTestRoomData() {
 			TestRoom testroom = new TestRoom(WIDTH,HEIGHT);
@@ -111,18 +115,11 @@ public class Room extends SimState{
 		        	RoomAgent a = new RoomAgent(i, Stadium.TEST, generateRandomMoveRate(), maxMoveRate, maxPatience, endTile, results);
 		        	startTile.addToPotentialList(a);
 		        	Point loc = new GeometryFactory().createPoint(getCoordForTile(startTile));
-//		        	Point locEnd = new GeometryFactory().createPoint(getCoordForTile(endTile));
 			    	a.setLocation(loc);
-//		        	Path p = calcNewPath(a, startTile, endTile);
-//		        	if (p!=null){
-//		        		a.setPath(this, p);
-//		        	}
 			    	a.isMovable = true;
 	    			agents.addGeometry(a);
 	                Stoppable stoppable = schedule.scheduleRepeating(a);
 	                a.setStoppMe(stoppable);
-	               // LOGGER.info("--------------------------------------------");
-	                //LOGGER.info("Agent {}: Start={} Ende={}", a.getId(), loc.toText(), locEnd.toText());
 		        }        
 		    }
 		    //grund- und hilfsfunktionen
@@ -149,13 +146,13 @@ public class Room extends SimState{
 			for (int tx=0;tx< width; tx++){
 				for (int ty=0;ty<height; ty++){
 					Tile t = map.getTile(tx, ty);
-					boolean empty = (destinations.getObjectsWithinDistance(t, TILESIZE)).isEmpty();
+					boolean empty = (destinations.getObjectsWithinDistance(t.getGeometry().getCentroid(), TILESIZE)).isEmpty();
 					if (!empty){
 						if (!allTilesOfDestinations.contains(t)){
 							allTilesOfDestinations.add(t);
 						}
 					}
-					empty = (starts.getObjectsWithinDistance(t, TILESIZE)).isEmpty();
+					empty = (starts.getObjectsWithinDistance(t.getGeometry().getCentroid(), TILESIZE)).isEmpty();
 					if (!empty){
 						if (!allTilesOfStarts.contains(t)){
 							allTilesOfStarts.add(t);
@@ -164,6 +161,21 @@ public class Room extends SimState{
 				}
 			}
 		}
+	    private void getAllTilesOfDisplays() {
+			int width = getWidthInTiles();
+			int height = getHeightInTiles();
+			for (int tx=0;tx< width; tx++){
+				for (int ty=0;ty<height; ty++){
+					Tile t = map.getTile(tx, ty);
+					boolean empty = (displays.getObjectsWithinDistance(t.getGeometry().getCentroid(), TILESIZE)).isEmpty();
+					if (!empty){
+						if (!allTilesOfDisplays.contains(t)){
+							allTilesOfDisplays.add(t);
+						}
+					}
+				}
+			}
+	    }
 
 		public int getWidthInTiles(){
 			Envelope mbr = movingSpace.getMBR();
@@ -296,16 +308,46 @@ public class Room extends SimState{
 	        results = new Results(NUM_AGENTS);
 	        Stoppable stoppable = schedule.scheduleRepeating(results);
 	        results.setStoppMe(stoppable);
+	        addDisplays();
 	        //entferne eventuell noch vorhandene Agenten
 	        agents.clear(); 
 	        //füge neue Agenten hinzu
-	        System.out.println("Füge Agenten hinzu...");
+	        LOGGER.info("Füge Agenten hinzu...");
 	        addAgents();
 	        //setze den minimum bounding rectangle anhand des Bewegungsraums
 	        agents.setMBR(movingSpace.getMBR());
 	    }    
 	    
-	    public static void main(String[] args){
+
+	    private void addDisplays() {
+			Bag DisplayBag = new Bag();
+			DisplayBag.addAll(allTilesOfDisplays);
+			ArrayList<Display> displList = new ArrayList<Display>();
+			for (Object object : displays.getGeometries()){
+				Geometry g  = ((MasonGeometry) object).getGeometry();
+				Bag tilesOfMg = new Bag();
+				for (Object o : DisplayBag){
+		    		Tile t = (Tile) o;
+		    		boolean empty = g.isWithinDistance(t.getGeometry().getCentroid(), TILESIZE);
+		    		if (!empty){
+		    			tilesOfMg.add(t);
+		    			DisplayBag.remove(t);
+		    		}
+		    	}
+				Display d = new Display(tilesOfMg);
+	    		displList.add(d);
+	    		d.geometry = g;
+	    		Stoppable stoppable = schedule.scheduleRepeating(d);
+                d.setStoppMe(stoppable);
+			}
+		    	
+	    	for (Display d : displList){
+	    		d.setDisplayList(displList);
+	    	}
+
+		}
+
+		public static void main(String[] args){
 	        doLoop(Room.class, args);
 	        System.exit(0);
 	    }

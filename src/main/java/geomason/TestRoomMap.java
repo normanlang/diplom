@@ -102,8 +102,8 @@ public class TestRoomMap implements TileBasedMap{
 				Polygon poly = new GeometryFactory().createPolygon(lr);
 				Tile tile = new Tile(i,j);
 				tile.setPolygon(poly);
-				Bag obstacles = room.obstacles.getObjectsWithinDistance(poly, Room.TILESIZE);
-				Bag inMovingSpace = room.movingSpace.getObjectsWithinDistance(poly, Room.TILESIZE);
+				Bag obstacles = room.obstacles.getObjectsWithinDistance(poly.getCentroid(), Room.TILESIZE);
+				Bag inMovingSpace = room.movingSpace.getObjectsWithinDistance(poly.getCentroid(), Room.TILESIZE);
 				if (!obstacles.isEmpty() || inMovingSpace.isEmpty()){
 					tile.setUsable(false);
 				} else if (!inMovingSpace.isEmpty()){
@@ -263,6 +263,9 @@ public class TestRoomMap implements TileBasedMap{
 	public float getCost(Mover mover, int sx, int sy, int tx, int ty) {
 		return 1;
 	}
+
+
+
 
 	public void readStaticFloorField(Stadium stadium) {
 		BufferedReader br = null;

@@ -101,13 +101,14 @@ public class Tile extends MasonGeometry{
 	
 	
 	//für room
-	public void addToPotentialList(RoomAgent a){
+	public synchronized void addToPotentialList(RoomAgent a){
 		potentialRoomAgentList.add(a);
-		//LOGGER.info("Roomagent mit ID {} zu {} hinzugefügt", a.getId(),this);
+		//LOGGER.debug("Roomagent mit ID {} zu Tile({},{}) hinzugefügt", a.getId(),getX(),getY());
 	}
 	
-	public void removeFromPotentialList(RoomAgent a){
+	public synchronized void removeFromPotentialList(RoomAgent a){
 		potentialRoomAgentList.remove(a);
+		//LOGGER.debug("Roomagent mit ID {} von Tile({},{}) entfernt", a.getId(),getX(),getY());
 	}
 	
 	/**
@@ -141,5 +142,38 @@ public class Tile extends MasonGeometry{
 	public void addDestination(Tile tile, int length) {
 		destinations.put(tile, length);
 	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + x;
+		result = prime * result + y;
+		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Tile other = (Tile) obj;
+		if (x != other.x)
+			return false;
+		if (y != other.y)
+			return false;
+		return true;
+	}
+	
+	
 	
 }

@@ -23,6 +23,7 @@ public class RoomWithGui extends GUIState{
     GeomVectorFieldPortrayal movingSpacePortrayal = new GeomVectorFieldPortrayal();
     GeomVectorFieldPortrayal agentPortrayal = new GeomVectorFieldPortrayal();
     GeomVectorFieldPortrayal obstaclePortrayal = new GeomVectorFieldPortrayal();
+    GeomVectorFieldPortrayal displayPortrayal = new GeomVectorFieldPortrayal();
     
     public static final Logger LOGGER = LoggerFactory.getLogger(RoomWithGui.class);
 
@@ -41,6 +42,7 @@ public class RoomWithGui extends GUIState{
         display.attach(movingSpacePortrayal, "Bewegungsraum");
         display.attach(agentPortrayal, "Agenten");
         display.attach(obstaclePortrayal, "Hindernisse");
+        display.attach(displayPortrayal, "Displays");
         displayFrame = display.createFrame();
         controller.registerFrame(displayFrame);
         displayFrame.setVisible(true);
@@ -55,6 +57,8 @@ public class RoomWithGui extends GUIState{
         movingSpacePortrayal.setPortrayalForAll(new GeomPortrayal(Color.GRAY,true));
         obstaclePortrayal.setField(roomState.obstacles);
         obstaclePortrayal.setPortrayalForAll(new GeomPortrayal(Color.BLACK,true));
+        displayPortrayal.setField(roomState.displays);
+        displayPortrayal.setPortrayalForAll(new GeomPortrayal(Color.GREEN,false));
         display.reset();
         display.setBackdrop(Color.WHITE);
         display.repaint();
