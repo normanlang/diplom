@@ -17,7 +17,7 @@ public class MasonGeometryBlock extends MasonGeometry{
 
 
     public int numAgentsInGeometry(){
-        Bag coveredAgents = PreussenStadiumModel.agents.getCoveredObjects(this);
+        Bag coveredAgents = Room.agents.getCoveredObjects(this);
         return coveredAgents.numObjs;
     }
     

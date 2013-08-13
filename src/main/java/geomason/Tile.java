@@ -22,7 +22,6 @@ public class Tile extends MasonGeometry{
 	 * 
 	 */
 	private static final long serialVersionUID = -5161567811618409640L;
-	private ArrayList<Agent> agentList = new ArrayList<Agent>();
 	private ArrayList<RoomAgent> potentialRoomAgentList = new ArrayList<RoomAgent>();
 	private boolean usable = false;
 	private Polygon polygon = null;
@@ -55,29 +54,6 @@ public class Tile extends MasonGeometry{
 	
 	public boolean isUsable(){
 		return usable;
-	}
-	
-	
-	public void addAgent(Agent a){
-		agentList.add(a);
-	}
-	
-	public void addAgents(ArrayList<Agent> al){
-		agentList.addAll(al);
-	}
-	public void removeAgent(Agent a){
-		agentList.remove(a);
-	}
-	
-	public void removeAgents(ArrayList<Agent> al){
-		agentList.removeAll(al);
-	}
-
-	/**
-	 * @return the agentList
-	 */
-	public ArrayList<Agent> getAgentList() {
-		return agentList;
 	}
 	
 	/**
@@ -122,7 +98,7 @@ public class Tile extends MasonGeometry{
 	public String toString() {
 		return String
 				.format("Tile [agentList=%s, potentialRoomAgentList=%s, usable=%s, polygon=%s, x=%s, y=%s]",
-						agentList, potentialRoomAgentList, usable, polygon, x, y);
+						potentialRoomAgentList, usable, polygon, x, y);
 	}
 
 	/**

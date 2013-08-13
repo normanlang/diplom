@@ -1,7 +1,6 @@
 package geomason;
 
 import static geomason.RoomAgent.fakeAgentID;
-
 import geomason.RoomAgent.Stadium;
 
 import java.io.BufferedReader;
@@ -11,7 +10,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
@@ -38,26 +36,12 @@ public class TestRoomMap implements TileBasedMap{
 	private double minX, minY;
 	private Tile[][] map;
 	private boolean[][] visited; 
-	private TestRoomWithObstacle testRoom;
 	private Room room;
 	private String tokenSep = ",";
 	private String blockSep = ";";
 
 	private boolean append = true;
 
-	public TestRoomMap(TestRoomWithObstacle state){
-		testRoom = state;
-		width = testRoom.getWidthinTiles();
-		height = testRoom.getHeightinTiles();
-		//hole minX u. minY zur Berechnung des "Mapursprungs"
-		minX = (int) Math.floor(testRoom.movingSpace.getMBR().getMinX()); 
-		minY = (int) Math.floor(testRoom.movingSpace.getMBR().getMinY());
-		map = new Tile[width][height];
-		visited = new boolean[width][height];
-		buildMap();
-	}
-	
-	
 	public TestRoomMap(Room state){
 		room = state;
 		width = room.getWidthInTiles();
@@ -69,7 +53,9 @@ public class TestRoomMap implements TileBasedMap{
 		minY = (int) Math.floor(room.movingSpace.getMBR().getMinY());
 		map = new Tile[width][height];
 		visited = new boolean[width][height];
+		LOGGER.info("Starte Aufbau des Gitters");
 		buildRoomMap();
+		LOGGER.info("Gitter erzeugt");
 	}
 
 	private void buildRoomMap() {
@@ -119,35 +105,11 @@ public class TestRoomMap implements TileBasedMap{
 		}
 		
 	}
-			
-	private void buildMap() {
-		int xTile = (int) Math.floor(minX);
-		int yTile = (int) Math.floor(minY);
-		for (int i = 0; i< width; i++){
-			for(int j=0; j< height; j++){
-				
-				//baue ein Polygon was das Tile darstellen soll als Quadrat mit einer Kantenlänge von 1m
-				Coordinate p1 = new Coordinate(xTile, yTile);
-				Coordinate p2 = new Coordinate(xTile + 1, yTile);
-				Coordinate p3 = new Coordinate(xTile, yTile + 1);
-				Coordinate p4 = new Coordinate(xTile+ 1, yTile+ 1);
-				Coordinate[] points = {p1, p2, p3, p4, p1};
-				LinearRing lr = new GeometryFactory().createLinearRing(points);
-				Polygon poly = new GeometryFactory().createPolygon(lr);
-				Tile tile = new Tile(i,j);
-				tile.setPolygon(poly);
-				map[i][j] = tile;
-				//ändere die Höhe für das nächste Tile
-				yTile = yTile + 1;
-			}
-			xTile = xTile + 1;
-		}
-		
-	}
 	
 	public void createStaticFloorField(Bag allDestinationCenterAsTiles, RoomAgent.Stadium stadium){
 		//gehe alle tiles der map durch
 		LOGGER.trace("Start processing tiles");
+		int max = width*height;
 		int x = 0;
 		RoomAgent a = new RoomAgent(fakeAgentID, stadium, 1, Integer.MAX_VALUE, Integer.MAX_VALUE, new Tile(0, 0), new Results(room.NUM_AGENTS)); //fakeAgent
 		for (int tx=0;tx< width; tx++){
@@ -175,7 +137,7 @@ public class TestRoomMap implements TileBasedMap{
 				}
 				x++;
 				if (x%100 == 0){
-					LOGGER.trace("Processed {} tiles...",x);
+					LOGGER.trace("Processed {} of {} tiles...",x, max);
 				}
 			}
 		}
@@ -189,8 +151,8 @@ public class TestRoomMap implements TileBasedMap{
 			fw.flush();
 			fw.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			LOGGER.error("I/O-Fehler: {}", e.getMessage());
 		}
 	}
 
@@ -218,7 +180,6 @@ public class TestRoomMap implements TileBasedMap{
 		return width;
 	}
 	public int getHeightInTiles() {
-		// TODO Auto-generated method stub
 		return height;
 	}
 
@@ -285,18 +246,18 @@ public class TestRoomMap implements TileBasedMap{
 				}
 			}
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			LOGGER.error("Datei nicht gefunden; {}", e.getMessage());
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			LOGGER.error("I/O-Fehler: {}", e.getMessage());
 		} finally {
 			if (br != null) {
 				try {
 					br.close();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
+					LOGGER.error("I/O-Fehler: {}", e.getMessage());
 				}
 			}
 		}

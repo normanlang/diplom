@@ -53,7 +53,7 @@ public class Display extends MasonGeometry implements Steppable{
 		}
 		
 		RoomAgent a = agentlist.get(state.random.nextInt(agentlist.size()));
-		Tile agentTile = a.getPositionAsTile();
+		Tile agentTile = a.getPositionAsTile(state);
 		LOGGER.info("Dangerindex geändert für Agent {}", a.getId());
 	}
 

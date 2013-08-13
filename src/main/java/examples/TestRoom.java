@@ -1,7 +1,7 @@
 package examples;
 
 import geomason.MasonGeometryBlock;
-import geomason.TestRoomWithObstacle;
+import geomason.Room;
 
 import java.io.FileNotFoundException;
 import java.net.URL;
@@ -32,8 +32,8 @@ public class TestRoom implements RoomInterface{
     
 	private void loadData(){
         // url für die vektordaten der Zonen und des Bewegungsraums
-		URL testRoomBoundaries = TestRoomWithObstacle.class.getResource("data/movingSpace-testroom.shp");
-		URL obstacleBoundaries = TestRoomWithObstacle.class.getResource("data/hindernisse.shp");
+		URL testRoomBoundaries = Room.class.getResource("data/movingSpace-testroom.shp");
+		URL obstacleBoundaries = Room.class.getResource("data/hindernisse.shp");
         Bag movingSpaceAttributes = new Bag();
         movingSpaceAttributes.add("Art");     
         //lese vom Vektorlayer noch Attribute aus der shp-Datei aus
@@ -119,5 +119,6 @@ public class TestRoom implements RoomInterface{
 	public int getMaxPatience() {
 		return maxPatience;
 	}
+
 
 }

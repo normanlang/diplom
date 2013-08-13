@@ -15,67 +15,84 @@ import sim.util.Bag;
 
 import com.vividsolutions.jts.geom.Envelope;
 
-public class TestRoomSmall implements RoomInterface{
+public class Preussenstadion implements RoomInterface{
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(TestRoomSmall.class);
-    public final int NUM_AGENTS = 10;
+	private static final Logger LOGGER = LoggerFactory.getLogger(Preussenstadion.class);
+    public final int NUM_AGENTS = 50;
     private int maxMoveRate = 5; //in Tiles 
     private int maxPatience = 15;
     private GeomVectorField movingSpace, obstacles, destinations, starts, displays;
     Envelope MBR;
+    private int width, height;
     
-    public TestRoomSmall(int w, int h){
+    public Preussenstadion(int w, int h){
+    	width = w;
+    	height = h;
     	movingSpace = new GeomVectorField(w, h);
         obstacles = new GeomVectorField(w, h);
         destinations = new GeomVectorField(w, h);
         starts = new GeomVectorField(w, h);
         displays = new GeomVectorField(w, h);
     	loadData();
-    	addStartsAndDestinations();
     }
     
 	private void loadData(){
         // url für die vektordaten der Zonen und des Bewegungsraums
-		URL testRoomBoundaries = Room.class.getResource("data/bewegungsraum.shp");
-		URL obstacleBoundaries = Room.class.getResource("data/hindernisseklein.shp");
-		URL displaysBoundaries = Room.class.getResource("data/displays.shp");
-        Bag movingSpaceAttributes = new Bag();
-        movingSpaceAttributes.add("Art");     
-        Bag displayAttributes = new Bag();
-        displayAttributes.add("DisplayID");
+		URL testRoomBoundaries = Room.class.getResource("data/diplom/movingspace.shp");
+		URL obstacleBoundaries = Room.class.getResource("data/diplom/hindernisse.shp");
+		URL displaysBoundaries = Room.class.getResource("data/diplom/displays.shp");
+		URL heimStartsBoundaries = Room.class.getResource("data/diplom/startzonen.shp");
+		URL zielBoundaries = Room.class.getResource("data/diplom/zielzonen.shp");
+        Bag attributes = new Bag();
+        attributes.add("Art");     
         //lese vom Vektorlayer noch Attribute aus der shp-Datei aus
-
+        GeomVectorField tmpStarts = new GeomVectorField(width, height);
+        GeomVectorField tmpDests = new GeomVectorField(width, height);
 		try{
 	        //lese den vector-layer des Raums und der Zonen ein
 			LOGGER.info("Setup Testroom");
 			LOGGER.info("lese die Vektordaten ein...");
-            ShapeFileImporter.read(testRoomBoundaries, movingSpace, movingSpaceAttributes, MasonGeometryBlock.class);
+            ShapeFileImporter.read(testRoomBoundaries, movingSpace, attributes, MasonGeometryBlock.class);
             ShapeFileImporter.read(obstacleBoundaries, obstacles);
-            ShapeFileImporter.read(displaysBoundaries, displays, displayAttributes);
+            ShapeFileImporter.read(displaysBoundaries, displays, attributes);
+            ShapeFileImporter.read(heimStartsBoundaries, tmpStarts, attributes, MasonGeometryBlock.class);
+            ShapeFileImporter.read(zielBoundaries, tmpDests, attributes, MasonGeometryBlock.class);
         } catch (FileNotFoundException ex){
         	LOGGER.error("ShapeFile import failed");
         }
 		//sicher stellen, dass beide das gleiche minimum bounding rectangle(mbr) haben
+		removeGaeste(tmpStarts, tmpDests);
 		MBR = movingSpace.getMBR();
 		obstacles.setMBR(MBR);
 		displays.setMBR(MBR);
+		starts.setMBR(MBR);
+		destinations.setMBR(MBR);
 		obstacles.computeConvexHull();
 		movingSpace.computeConvexHull();
 		displays.computeConvexHull();
+		starts.computeConvexHull();
+		destinations.computeConvexHull();
+		
 	}
-	
-	private void addStartsAndDestinations() {
-		Bag tmp = movingSpace.getGeometries();
+	private void removeGaeste(GeomVectorField s, GeomVectorField d) {
+		Bag tmp = s.getGeometries();
+		Bag tmpz = d.getGeometries();
 		Bag allMGBs = new Bag();
 		allMGBs.addAll(tmp);
 		while (!allMGBs.isEmpty()){
 			MasonGeometryBlock mgb = (MasonGeometryBlock) allMGBs.pop();
 			String name =  mgb.getStringAttribute("Art");
-			if (name.equalsIgnoreCase("ziel1") || name.equalsIgnoreCase("ziel2") || name.equalsIgnoreCase("ziel3")) {
-				destinations.addGeometry(mgb);
-			}
-			if (name.equalsIgnoreCase("start")) {
+			if (name.equalsIgnoreCase("heim")) {
 				starts.addGeometry(mgb);
+			}
+		}
+		allMGBs.clear();
+		allMGBs.addAll(tmpz);
+		while (!allMGBs.isEmpty()){
+			MasonGeometryBlock mgb = (MasonGeometryBlock) allMGBs.pop();
+			String name =  mgb.getStringAttribute("Art");
+			if (name.equalsIgnoreCase("heim")) {
+				destinations.addGeometry(mgb);
 			}
 		}
 		

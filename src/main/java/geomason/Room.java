@@ -1,6 +1,7 @@
 package geomason;
 
 import static geomason.TestRoomMap.STATIC_MAP_TILES_CSV;
+import examples.Preussenstadion;
 import examples.TestRoom;
 import examples.TestRoomSmall;
 import geomason.RoomAgent.Stadium;
@@ -55,23 +56,74 @@ public class Room extends SimState{
 	    private int maxPatience;
 	    private Results results; 
 	    private Bag standardCosts;
+	    private Stadium stadium;
 	    
 		public Room(long seed) {
 			super(seed);
-//			loadTestRoomData();
-			loadTestRoomSmallData();
+			setStadium(stadium.TESTSMALL);
+			LOGGER.info("Daten erfolgreich geladen");
 	        map = new TestRoomMap(this);
+	        LOGGER.info("Erzeuge alle Start- und Zielzellen");
 	        getAllDestinationsAndStartsTiles();
+	        LOGGER.info("Start- und Zielzellen erfolgreich erzeugt");
 	        getAllCenterTilesOfDestinations();
+	        LOGGER.info("Erzeuge alle Displayzellen");
 	        getAllTilesOfDisplays();
+	        LOGGER.info("Displayzellen erfolgreich erzeugt");
 	        standardCosts = calcCostsWithoutInfluences((Tile) getAllCenterTilesOfDestinations().get(0), OWNCOST);
-	        Stadium stadium = Stadium.TEST;
+	        standardCostsCheck();
 	        if (!(new File(stadium.name() + "-" + STATIC_MAP_TILES_CSV).exists())){
 	        	LOGGER.trace("create static floor field");
 	        	map.createStaticFloorField(allDestinationCenterTiles, stadium);
 	        } else {
 	        	map.readStaticFloorField(stadium);
 	        }
+		}
+		private void standardCostsCheck() {
+			CostTile t1 = (CostTile) standardCosts.get(50);
+			CostTile t2 = (CostTile) standardCosts.get(72);
+			CostTile t3 = (CostTile) standardCosts.get(48);
+			CostTile t4 = (CostTile) standardCosts.get(70);
+			CostTile t5 = (CostTile) standardCosts.get(61);
+			CostTile t6 = (CostTile) standardCosts.get(49);
+			CostTile t7 = (CostTile) standardCosts.get(59);
+			CostTile t8 = (CostTile) standardCosts.get(71);
+	        if (!(t1.getCosts() == t2.getCosts() && t1.getCosts() == t3.getCosts() && t1.getCosts() == t4.getCosts())){
+	        	System.out.println("");
+	        }
+	        if (!(t5.getCosts() == t6.getCosts() && t5.getCosts() == t7.getCosts() && t5.getCosts() == t8.getCosts())){
+	        	System.out.println("");
+	        }			
+		}
+		private void setStadium(Stadium stadium){
+			this.stadium = stadium;
+			switch (this.stadium){
+		    	case PREUSSEN: //für Preussenstadion
+		    		loadPreussenData();
+		            break;
+		    	case TEST:  
+		    		loadTestRoomData();
+		    		break;
+		    	case TESTSMALL:
+		    		loadTestRoomSmallData();
+		    		break;
+		    	default:
+		    		loadTestRoomSmallData();
+		    		break;
+			}
+	    		
+		}
+		
+		private void loadPreussenData() {
+			Preussenstadion preussen = new Preussenstadion(WIDTH,HEIGHT);
+			movingSpace = preussen.getMovingSpace();
+			obstacles = preussen.getObstacles();
+			destinations = preussen.getDestinations();
+			NUM_AGENTS = preussen.getNUM_AGENTS();
+			starts = preussen.getStarts();
+			maxMoveRate = preussen.getMaxMoveRateInTiles();
+			maxPatience = preussen.getMaxPatience();
+			displays = preussen.getDisplays();
 		}
 		
 		private void loadTestRoomSmallData() {
@@ -195,6 +247,10 @@ public class Room extends SimState{
 		public int getStandardCostsForTargetTile(Tile actualPosition, Tile targetTile, int costs) {
 			int x = targetTile.getX() - actualPosition.getX();
 			int y = targetTile.getY() - actualPosition.getY();
+			if (Math.abs(x) > maxMoveRate || Math.abs(y) > maxMoveRate){
+				costs = costs + 0;
+				return costs;
+			}
 			int i = (2*maxMoveRate+1) * (x+ maxMoveRate) + (y+ maxMoveRate);
 			CostTile costTile = (CostTile) standardCosts.get(i);
 			//Sicherheitsüberprüfung
@@ -308,7 +364,8 @@ public class Room extends SimState{
 	        results = new Results(NUM_AGENTS);
 	        Stoppable stoppable = schedule.scheduleRepeating(results);
 	        results.setStoppMe(stoppable);
-	        addDisplays();
+	        ArrayList<Display> dl = addDisplays();
+	        results.setDisplayList(dl);
 	        //entferne eventuell noch vorhandene Agenten
 	        agents.clear(); 
 	        //füge neue Agenten hinzu
@@ -319,7 +376,7 @@ public class Room extends SimState{
 	    }    
 	    
 
-	    private void addDisplays() {
+	    private ArrayList<Display> addDisplays() {
 			Bag DisplayBag = new Bag();
 			DisplayBag.addAll(allTilesOfDisplays);
 			ArrayList<Display> displList = new ArrayList<Display>();
@@ -345,7 +402,7 @@ public class Room extends SimState{
 	    	for (Display d : displList){
 	    		d.setDisplayList(displList);
 	    	}
-
+	    	return displList;
 		}
 
 		public static void main(String[] args){
