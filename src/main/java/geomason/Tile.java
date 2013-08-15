@@ -27,7 +27,7 @@ public class Tile extends MasonGeometry{
 	private Polygon polygon = null;
 	private int x,y;
 	private HashMap<Tile, Integer> destinations = new HashMap<Tile, Integer>();
-	
+
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(Tile.class);
 	

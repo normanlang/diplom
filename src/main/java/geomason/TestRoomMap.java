@@ -108,8 +108,11 @@ public class TestRoomMap implements TileBasedMap{
 	
 	public void createStaticFloorField(Bag allDestinationCenterAsTiles, RoomAgent.Stadium stadium){
 		//gehe alle tiles der map durch
-		LOGGER.trace("Start processing tiles");
 		int max = width*height;
+		LOGGER.trace("Start processing tiles. Width: {}, Height: {}, Tiles Gesamt: {}",
+				width,
+				height,
+				max);
 		int x = 0;
 		RoomAgent a = new RoomAgent(fakeAgentID, stadium, 1, Integer.MAX_VALUE, Integer.MAX_VALUE, new Tile(0, 0), new Results(room.NUM_AGENTS)); //fakeAgent
 		for (int tx=0;tx< width; tx++){
@@ -136,7 +139,7 @@ public class TestRoomMap implements TileBasedMap{
 					writeTileInformationToFile(stadium,currentTile);
 				}
 				x++;
-				if (x%100 == 0){
+				if (x%500 == 0){
 					LOGGER.trace("Processed {} of {} tiles...",x, max);
 				}
 			}

@@ -60,7 +60,7 @@ public class Room extends SimState{
 	    
 		public Room(long seed) {
 			super(seed);
-			setStadium(stadium.TESTSMALL);
+			setStadium(stadium.PREUSSEN);
 			LOGGER.info("Daten erfolgreich geladen");
 	        map = new TestRoomMap(this);
 	        LOGGER.info("Erzeuge alle Start- und Zielzellen");
@@ -163,7 +163,12 @@ public class Room extends SimState{
 		        		break;
 		        	}
 		        	Tile startTile = (Tile) tmpStarts.pop();
-		        	Tile endTile = (Tile) tmpDests.get(random.nextInt(tmpDests.size()));
+		        	Bag startZone = starts.getObjectsWithinDistance(startTile, TILESIZE);
+		        	if (startZone.isEmpty()){
+		        		LOGGER.error("Startzone != 1.");
+		        		throw new RuntimeException("startZone != 1");
+		        	}
+		        	Tile endTile = getEndTileforStartTile(startZone, tmpDests);
 		        	RoomAgent a = new RoomAgent(i, Stadium.TEST, generateRandomMoveRate(), maxMoveRate, maxPatience, endTile, results);
 		        	startTile.addToPotentialList(a);
 		        	Point loc = new GeometryFactory().createPoint(getCoordForTile(startTile));
@@ -177,6 +182,26 @@ public class Room extends SimState{
 		    //grund- und hilfsfunktionen
 		
 
+		private Tile getEndTileforStartTile(Bag startZone, Bag tmpDests) {
+			MasonGeometry mg = (MasonGeometry) startZone.get(0);
+			boolean containsID1 = mg.getAttributes().containsKey("ID1");
+			if (containsID1){
+				int dest = mg.getIntegerAttribute("ID1");
+				for (Object o : tmpDests){
+					Tile t = (Tile) o;
+					Bag endZones = destinations.getObjectsWithinDistance(t, TILESIZE);
+					if (endZones.isEmpty()){
+			        	LOGGER.error("endZone != 1.");
+			       		throw new RuntimeException("endZone != 1");
+			        }
+					if (dest == ((MasonGeometry) endZones.get(0)).getIntegerAttribute("ID1")){
+						return t;
+					}
+				}
+			}
+			return (Tile) tmpDests.get(random.nextInt(tmpDests.size()));			
+		}
+		
 		private Bag getAllCenterTilesOfDestinations(){
 			Bag tmp = new Bag(destinations.getGeometries());
 			Bag dests  = new Bag();

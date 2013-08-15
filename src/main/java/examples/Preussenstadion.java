@@ -18,7 +18,7 @@ import com.vividsolutions.jts.geom.Envelope;
 public class Preussenstadion implements RoomInterface{
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(Preussenstadion.class);
-    public final int NUM_AGENTS = 50;
+    public final int NUM_AGENTS = 1000;
     private int maxMoveRate = 5; //in Tiles 
     private int maxPatience = 15;
     private GeomVectorField movingSpace, obstacles, destinations, starts, displays;
@@ -45,6 +45,9 @@ public class Preussenstadion implements RoomInterface{
 		URL zielBoundaries = Room.class.getResource("data/diplom/zielzonen.shp");
         Bag attributes = new Bag();
         attributes.add("Art");     
+        Bag polyAttributes = new Bag();
+        polyAttributes.add("Art");
+        polyAttributes.add("ID1");
         //lese vom Vektorlayer noch Attribute aus der shp-Datei aus
         GeomVectorField tmpStarts = new GeomVectorField(width, height);
         GeomVectorField tmpDests = new GeomVectorField(width, height);
@@ -55,8 +58,8 @@ public class Preussenstadion implements RoomInterface{
             ShapeFileImporter.read(testRoomBoundaries, movingSpace, attributes, MasonGeometryBlock.class);
             ShapeFileImporter.read(obstacleBoundaries, obstacles);
             ShapeFileImporter.read(displaysBoundaries, displays, attributes);
-            ShapeFileImporter.read(heimStartsBoundaries, tmpStarts, attributes, MasonGeometryBlock.class);
-            ShapeFileImporter.read(zielBoundaries, tmpDests, attributes, MasonGeometryBlock.class);
+            ShapeFileImporter.read(heimStartsBoundaries, tmpStarts, polyAttributes, MasonGeometryBlock.class);
+            ShapeFileImporter.read(zielBoundaries, tmpDests, polyAttributes, MasonGeometryBlock.class);
         } catch (FileNotFoundException ex){
         	LOGGER.error("ShapeFile import failed");
         }

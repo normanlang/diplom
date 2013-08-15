@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.newdawn.slick.util.pathfinding.Mover;
@@ -76,12 +77,12 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     private void moveAgent(SimState state){
     	actualTile = getActualTile(roomState);
     	if (isTargetReached(actualTile)){
-    		LOGGER.info("Agent {} hat Ziel erreicht (MoveRate:{}, Ziel:({},{}),Steps:{})",
-    					id,
-    					moveRate,
-    					destTile.getX(),
-    					destTile.getY(),
-    					String.valueOf(roomState.schedule.getSteps()));
+//    		LOGGER.info("Agent {} hat Ziel erreicht (MoveRate:{}, Ziel:({},{}),Steps:{})",
+//    					id,
+//    					moveRate,
+//    					destTile.getX(),
+//    					destTile.getY(),
+//    					String.valueOf(roomState.schedule.getSteps()));
     		if (stoppMe == null){
     			throw new RuntimeException("Stoppable nicht gesetzt");
     		}
@@ -101,13 +102,13 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     			randomTile = (Tile) allDestTiles.get(roomState.random.nextInt(allDestTiles.size()));
     		}
     		setDestTile(randomTile);
-    		LOGGER.info("Agent {} hat Ziel gewechselt (aktPos:({},{}), Ziel:({},{}),Steps:{})",
-					id,
-					actualTile.getX(),
-					actualTile.getY(),
-					destTile.getX(),
-					destTile.getY(),
-					String.valueOf(state.schedule.getSteps()));
+//    		LOGGER.info("Agent {} hat Ziel gewechselt (aktPos:({},{}), Ziel:({},{}),Steps:{})",
+//					id,
+//					actualTile.getX(),
+//					actualTile.getY(),
+//					destTile.getX(),
+//					destTile.getY(),
+//					String.valueOf(state.schedule.getSteps()));
     		destinationChanger = 0;
     	}
 
@@ -125,14 +126,14 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     		trace.add(actPoint);
         	Coordinate  coord = roomState.getCoordForTile(nextTile);
 //        	if (roomState.getAllTilesOfDestinations().contains(nextTile)){
-        		LOGGER.info("Agent {} von ({},{}) nach ({},{}) - Ziel:({},{})",
-        				id,
-        				actualTile.getX(),
-        				actualTile.getY(),
-        				nextTile.getX(),
-        				nextTile.getY(),
-        				String.valueOf(destTile.getX()),
-        				String.valueOf(destTile.getY()));
+//        		LOGGER.info("Agent {} von ({},{}) nach ({},{}) - Ziel:({},{})",
+//        				id,
+//        				actualTile.getX(),
+//        				actualTile.getY(),
+//        				nextTile.getX(),
+//        				nextTile.getY(),
+//        				String.valueOf(destTile.getX()),
+//        				String.valueOf(destTile.getY()));
 //        	}
     		moveTo(coord);
     	}
@@ -161,29 +162,66 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     	for (Object o : neighbourTiles){
     		Tile tile = (Tile) o;
     		boolean inDestZone = roomState.getAllDestinationCenterTiles().contains(tile);
-    		if (tile.isUsable() && (tile.getPotentialAgentsList().isEmpty() || inDestZone)){
+    		if (inDestZone){
+    			return tile;
+    		}
+    		if (tile.isUsable() && tile.getPotentialAgentsList().isEmpty()){
     			int length = tile.getDestinations().get(destTile);
     			if (length != Integer.MAX_VALUE){
     				length = length + getCostsForTarget(tile, state);
     				hmapWithTiles.put(tile, length);
+//    				if (state.schedule.getSteps() >= 300){
+//    					System.out.print("("+tile.getX()+","+tile.getY()+")->"+length+" ;");
+//    				}
+    				
     			}
     		}
     		
     	}
+//		if (state.schedule.getSteps() >= 300){
+//			System.out.println("");
+//		}
+
     	hmapWithTiles = sortByValue(hmapWithTiles);
     	if (hmapWithTiles.isEmpty()){
     		return null;
     	}
     	Tile shortest = hmapWithTiles.entrySet().iterator().next().getKey();
-    	LOGGER.debug("Kürzester Weg für Agent {}: ({},{}),Kosten:{},besetzt durch {}",
-    			id,
-    			shortest.getX(),
-    			shortest.getY(),
-    			hmapWithTiles.get(shortest),
-    			shortest.getPotentialAgentsList());
+		if (checkForDeadLock()){
+			if (hmapWithTiles.entrySet().iterator().hasNext()){
+				Tile randTile = hmapWithTiles.entrySet().iterator().next().getKey();
+//				LOGGER.debug("Wg Deadlock, Agent {}: ({},{}),Kosten:{},besetzt durch {}",
+//		    			id,
+//		    			randTile.getX(),
+//		    			randTile.getY(),
+//		    			hmapWithTiles.get(randTile),
+//		    			randTile.getPotentialAgentsList());
+				return randTile;
+			}
+			
+		}
+//    	LOGGER.debug("Kürzester Weg für Agent {}: ({},{}),Kosten:{},besetzt durch {}",
+//    	d		shortest.getPotentialAgentsList());
 		return shortest;
 	}
-	 private static <K, V extends Comparable<? super V>> Map<K, V> sortByValue( Map<K, V> map ) {
+	 private boolean checkForDeadLock() {
+		 if (trace.size()-11 >=0){
+				List<java.awt.Point> sublist = trace.subList(trace.size()-11, trace.size()-1);
+				int counter=0;
+				for (int i=1; i< sublist.size();i++){
+					if (sublist.get(i).equals(sublist.get(0))){
+						counter++;
+					}
+				}
+				if (counter>=5){
+					return true; 
+				} else return false;
+		 }
+		 return false;
+		
+	}
+
+	private static <K, V extends Comparable<? super V>> Map<K, V> sortByValue( Map<K, V> map ) {
 	     java.util.List<Map.Entry<K, V>> list = new LinkedList<Map.Entry<K, V>>( map.entrySet() );
 	     Collections.sort( list, new Comparator<Map.Entry<K, V>>(){
 	         public int compare( Map.Entry<K, V> o1, Map.Entry<K, V> o2 ){
@@ -204,10 +242,7 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 		Tile targetTile = tile;
 		int costs = 0;
 		Bag agents = getAgentsInMaxMoveRateDistance(targetTile);
-		if (roomState.getAllTilesOfDestinations().contains(targetTile)){
-			return costs = 1;
-		}
-		if (agents.isEmpty()){
+		if (agents.isEmpty() || roomState.getAllTilesOfDestinations().contains(targetTile)){
 			costs = roomState.getStandardCostsForTargetTile(actualTile, targetTile, costs);
 		} else {
 			for (Object o : agents){
