@@ -60,7 +60,7 @@ public class Room extends SimState{
 	    
 		public Room(long seed) {
 			super(seed);
-			setStadium(stadium.PREUSSEN);
+			setStadium(stadium.TEST);
 			LOGGER.info("Daten erfolgreich geladen");
 	        map = new TestRoomMap(this);
 	        LOGGER.info("Erzeuge alle Start- und Zielzellen");
@@ -70,7 +70,8 @@ public class Room extends SimState{
 	        LOGGER.info("Erzeuge alle Displayzellen");
 	        getAllTilesOfDisplays();
 	        LOGGER.info("Displayzellen erfolgreich erzeugt");
-	        standardCosts = calcCostsWithoutInfluences((Tile) getAllCenterTilesOfDestinations().get(0), OWNCOST);
+	        Tile randomTile = (Tile) allDestinationCenterTiles.get(0);
+	        standardCosts = calcCostsWithoutInfluences(randomTile, OWNCOST);
 	        standardCostsCheck();
 	        if (!(new File(stadium.name() + "-" + STATIC_MAP_TILES_CSV).exists())){
 	        	LOGGER.trace("create static floor field");
@@ -79,21 +80,26 @@ public class Room extends SimState{
 	        	map.readStaticFloorField(stadium);
 	        }
 		}
-		private void standardCostsCheck() {
-			CostTile t1 = (CostTile) standardCosts.get(50);
-			CostTile t2 = (CostTile) standardCosts.get(72);
-			CostTile t3 = (CostTile) standardCosts.get(48);
-			CostTile t4 = (CostTile) standardCosts.get(70);
-			CostTile t5 = (CostTile) standardCosts.get(61);
-			CostTile t6 = (CostTile) standardCosts.get(49);
-			CostTile t7 = (CostTile) standardCosts.get(59);
-			CostTile t8 = (CostTile) standardCosts.get(71);
-	        if (!(t1.getCosts() == t2.getCosts() && t1.getCosts() == t3.getCosts() && t1.getCosts() == t4.getCosts())){
-	        	System.out.println("");
-	        }
-	        if (!(t5.getCosts() == t6.getCosts() && t5.getCosts() == t7.getCosts() && t5.getCosts() == t8.getCosts())){
-	        	System.out.println("");
-	        }			
+		private boolean standardCostsCheck() {
+			if (maxMoveRate == 5){
+				CostTile t1 = (CostTile) standardCosts.get(50);
+				CostTile t2 = (CostTile) standardCosts.get(72);
+				CostTile t3 = (CostTile) standardCosts.get(48);
+				CostTile t4 = (CostTile) standardCosts.get(70);
+				CostTile t5 = (CostTile) standardCosts.get(61);
+				CostTile t6 = (CostTile) standardCosts.get(49);
+				CostTile t7 = (CostTile) standardCosts.get(59);
+				CostTile t8 = (CostTile) standardCosts.get(71);
+		        if (!(t1.getCosts() == t2.getCosts() && t1.getCosts() == t3.getCosts() && t1.getCosts() == t4.getCosts())){
+		        	LOGGER.debug("Standardkosten stimmen nicht");
+		        	return false;
+		        }
+		        if (!(t5.getCosts() == t6.getCosts() && t5.getCosts() == t7.getCosts() && t5.getCosts() == t8.getCosts())){
+		        	LOGGER.debug("Standardkosten stimmen nicht");
+		        	return false;
+		        }
+			}
+	        return true;
 		}
 		private void setStadium(Stadium stadium){
 			this.stadium = stadium;
@@ -146,6 +152,7 @@ public class Room extends SimState{
 			starts = testroom.getStarts();
 			maxMoveRate = testroom.getMaxMoveRateInTiles();
 			maxPatience = testroom.getMaxPatience();
+			displays = testroom.getDisplays();
 		}
 
 		private void addAgents(){
@@ -169,7 +176,7 @@ public class Room extends SimState{
 		        		throw new RuntimeException("startZone != 1");
 		        	}
 		        	Tile endTile = getEndTileforStartTile(startZone, tmpDests);
-		        	RoomAgent a = new RoomAgent(i, Stadium.TEST, generateRandomMoveRate(), maxMoveRate, maxPatience, endTile, results);
+		        	RoomAgent a = new RoomAgent(i, generateRandomMoveRate(), maxMoveRate, maxPatience, endTile, results);
 		        	startTile.addToPotentialList(a);
 		        	Point loc = new GeometryFactory().createPoint(getCoordForTile(startTile));
 			    	a.setLocation(loc);
@@ -194,7 +201,8 @@ public class Room extends SimState{
 			        	LOGGER.error("endZone != 1.");
 			       		throw new RuntimeException("endZone != 1");
 			        }
-					if (dest == ((MasonGeometry) endZones.get(0)).getIntegerAttribute("ID1")){
+					int destID = ((MasonGeometry) endZones.get(0)).getIntegerAttribute("ID1");
+					if (dest == destID){
 						return t;
 					}
 				}
@@ -387,7 +395,7 @@ public class Room extends SimState{
 	    public void start(){
 	        super.start();
 	        results = new Results(NUM_AGENTS);
-	        Stoppable stoppable = schedule.scheduleRepeating(results);
+	        Stoppable stoppable = schedule.scheduleRepeating(results, 1);
 	        results.setStoppMe(stoppable);
 	        ArrayList<Display> dl = addDisplays();
 	        results.setDisplayList(dl);

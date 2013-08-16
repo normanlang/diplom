@@ -37,7 +37,6 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     public static final int fakeAgentID = 999999;
     public static final int OWNCOST = 10000;
     public static enum Stadium {PREUSSEN,TEST,ESPRIT, TESTSMALL};
-    private Stadium stadium;
     private Room roomState = null;
     GeomVectorField accessableArea = null;
     private PointMoveTo pointMoveTo = new PointMoveTo();
@@ -54,8 +53,7 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 	boolean destchanger;
 	
     
-    public RoomAgent(int id, Stadium stadium, int moveRate, int maxMoveRate, int maxPatience, Tile destinationTile, Results result){
-       	this.stadium = stadium;
+    public RoomAgent(int id, int moveRate, int maxMoveRate, int maxPatience, Tile destinationTile, Results result){
        	this.id = id;
        	this.moveRate = moveRate;
        	this.maxMoveRate = maxMoveRate;
@@ -86,16 +84,14 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     		if (stoppMe == null){
     			throw new RuntimeException("Stoppable nicht gesetzt");
     		}
-    		result.reduceAgents();
-    		actualTile.removeFromPotentialList(this);
-    		stoppMe.stop();
+    		stopMeNow();
     		end = true;
     		if (roomState.NUM_AGENTS <= 150){
     			LOGGER.info("Trace: {}", logTrace());
     		}
     		return;
     	}
-    	if (destinationChanger == maxPatience ){
+    	if (destinationChanger == maxPatience || checkForDeadLock() ){
     		Bag allDestTiles = roomState.getAllDestinationCenterTiles();
     		Tile randomTile = (Tile) allDestTiles.get(roomState.random.nextInt(allDestTiles.size()));
     		while (randomTile.equals(destTile) && roomState.getAllDestinationCenterTiles().size() > 1){
@@ -181,41 +177,66 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 //		if (state.schedule.getSteps() >= 300){
 //			System.out.println("");
 //		}
-
     	hmapWithTiles = sortByValue(hmapWithTiles);
     	if (hmapWithTiles.isEmpty()){
+    		calcPressure(neighbourTiles, state);
     		return null;
     	}
     	Tile shortest = hmapWithTiles.entrySet().iterator().next().getKey();
-		if (checkForDeadLock()){
-			if (hmapWithTiles.entrySet().iterator().hasNext()){
-				Tile randTile = hmapWithTiles.entrySet().iterator().next().getKey();
-//				LOGGER.debug("Wg Deadlock, Agent {}: ({},{}),Kosten:{},besetzt durch {}",
-//		    			id,
-//		    			randTile.getX(),
-//		    			randTile.getY(),
-//		    			hmapWithTiles.get(randTile),
-//		    			randTile.getPotentialAgentsList());
-				return randTile;
-			}
-			
-		}
+		
 //    	LOGGER.debug("Kürzester Weg für Agent {}: ({},{}),Kosten:{},besetzt durch {}",
 //    	d		shortest.getPotentialAgentsList());
 		return shortest;
 	}
-	 private boolean checkForDeadLock() {
+	 private void calcPressure(Bag neighbourTiles, SimState state) {
+		Map<Tile, Integer> hmapWithTiles = new HashMap<Tile, Integer>();
+    	for (Object o : neighbourTiles){
+    		Tile tile = (Tile) o;
+    		if (tile.isUsable()){
+    			int length = tile.getDestinations().get(destTile);
+        		if (length != Integer.MAX_VALUE){
+        				length = length + getCostsForTarget(tile, state);
+        				hmapWithTiles.put(tile, length);
+        		}
+    		}
+    		
+    	}
+    	if (hmapWithTiles.isEmpty()){
+    		return;
+    	}
+    	hmapWithTiles = sortByValue(hmapWithTiles);
+    	Tile shortest = hmapWithTiles.entrySet().iterator().next().getKey();
+    	int length = hmapWithTiles.entrySet().iterator().next().getValue();
+    	if (length >= 1000){
+    		RoomAgent a = shortest.getPotentialAgentsList().get(0);
+    		int pressure = moveRate;
+    		result.addAgentToPressureList(a, pressure);
+    	}
+    		
+    	
+    	
+	}
+
+	private boolean checkForDeadLock() {
 		 if (trace.size()-11 >=0){
 				List<java.awt.Point> sublist = trace.subList(trace.size()-11, trace.size()-1);
 				int counter=0;
-				for (int i=1; i< sublist.size();i++){
-					if (sublist.get(i).equals(sublist.get(0))){
+				for (int i=2; i< sublist.size();i++){
+					int ax,ay,bx,by, cx,cy;
+					ax = ((java.awt.Point) sublist.get(i)).x;
+					ay = ((java.awt.Point) sublist.get(i)).y;
+					bx = ((java.awt.Point) sublist.get(i-1)).x;
+					by = ((java.awt.Point) sublist.get(i-1)).y;
+					cx = ((java.awt.Point) sublist.get(i-2)).x;
+					cy = ((java.awt.Point) sublist.get(i-2)).y;
+					if ( (ax == bx && ay== by) ||(ax == cx && ay == cy)){
 						counter++;
+						if (counter>=5){
+							return true; 
+						}
 					}
 				}
-				if (counter>=5){
-					return true; 
-				} else return false;
+
 		 }
 		 return false;
 		
@@ -316,7 +337,13 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 	public int getId() {
 		return id;
 	}
-
+	
+	
+	public void stopMeNow(){
+		result.reduceAgents();
+		actualTile.removeFromPotentialList(this);
+		stoppMe.stop();
+	}
 	/**
 	 * @param stoppMe the stoppMe to set
 	 */

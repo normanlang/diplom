@@ -15,10 +15,10 @@ import com.vividsolutions.jts.geom.Envelope;
 public class TestRoom implements RoomInterface{
 	
 	
-    public static int NUM_AGENTS = 2150;
+    public static int NUM_AGENTS = 1450;
     private int maxMoveRate = 4; //in Tiles 
     private int maxPatience = 15;
-    private GeomVectorField movingSpace, obstacles, destinations, starts;
+    private GeomVectorField movingSpace, obstacles, destinations, starts, displays;
     Envelope MBR;
     
     public TestRoom(int w, int h){
@@ -26,14 +26,17 @@ public class TestRoom implements RoomInterface{
         obstacles = new GeomVectorField(w, h);
         destinations = new GeomVectorField(w, h);
         starts = new GeomVectorField(w, h);
+        displays = new GeomVectorField(w, h);
     	loadData();
-    	addStartsAndDestinations();
     }
     
 	private void loadData(){
         // url für die vektordaten der Zonen und des Bewegungsraums
-		URL testRoomBoundaries = Room.class.getResource("data/movingSpace-testroom.shp");
-		URL obstacleBoundaries = Room.class.getResource("data/hindernisse.shp");
+		URL testRoomBoundaries = Room.class.getResource("data/displayversuch/movingspace.shp");
+		URL obstacleBoundaries = Room.class.getResource("data/displayversuch/hindernisse.shp");
+		URL startBoundaries = Room.class.getResource("data/displayversuch/start.shp");
+		URL destBoundaries = Room.class.getResource("data/displayversuch/ziel.shp");
+		URL displayBoundaries = Room.class.getResource("data/displayversuch/displays.shp");
         Bag movingSpaceAttributes = new Bag();
         movingSpaceAttributes.add("Art");     
         //lese vom Vektorlayer noch Attribute aus der shp-Datei aus
@@ -44,31 +47,23 @@ public class TestRoom implements RoomInterface{
 	        System.out.println("lese die Vektordaten ein...");
             ShapeFileImporter.read(testRoomBoundaries, movingSpace, movingSpaceAttributes, MasonGeometryBlock.class);
             ShapeFileImporter.read(obstacleBoundaries, obstacles);
+            ShapeFileImporter.read(startBoundaries, starts);
+            ShapeFileImporter.read(destBoundaries, destinations);
+            ShapeFileImporter.read(displayBoundaries, displays);
         } catch (FileNotFoundException ex){
             System.out.println("ShapeFile import failed");
         }
 		//sicher stellen, dass beide das gleiche minimum bounding rectangle(mbr) haben
 		MBR = movingSpace.getMBR();
 		obstacles.setMBR(MBR);
+		starts.setMBR(MBR);
+		destinations.setMBR(MBR);
+		displays.setMBR(MBR);
 		obstacles.computeConvexHull();
 		movingSpace.computeConvexHull();
-	}
-	
-	private void addStartsAndDestinations() {
-		Bag tmp = movingSpace.getGeometries();
-		Bag allMGBs = new Bag();
-		allMGBs.addAll(tmp);
-		while (!allMGBs.isEmpty()){
-			MasonGeometryBlock mgb = (MasonGeometryBlock) allMGBs.pop();
-			String name =  mgb.getStringAttribute("Art");
-			if (name.equalsIgnoreCase("evakuierung")) {
-				destinations.addGeometry(mgb);
-			}
-			if (name.equalsIgnoreCase("Block O")) {
-				starts.addGeometry(mgb);
-			}
-		}
-		
+		starts.computeConvexHull();
+		destinations.computeConvexHull();
+		displays.computeConvexHull();
 	}
 
 	/**
@@ -118,6 +113,10 @@ public class TestRoom implements RoomInterface{
 	 */
 	public int getMaxPatience() {
 		return maxPatience;
+	}
+
+	public GeomVectorField getDisplays() {
+		return displays;
 	}
 
 
