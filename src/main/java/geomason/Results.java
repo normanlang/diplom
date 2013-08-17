@@ -1,5 +1,7 @@
 package geomason;
 
+import geomason.RoomAgent.Stadium;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,15 +23,17 @@ public class Results implements Steppable{
 	private Schedule schedule;
 	private int numAgents;
 	private int deadAgents = 0;
+	private Stadium stadium;
 	private ArrayList<Display> displayList = new ArrayList<Display>();
 	private HashMap<RoomAgent, Integer> pressureList = new HashMap<RoomAgent, Integer>();
 	
-	public Results(int numAgents){
-		this.numAgents = numAgents; 
+	public Results(int numAgents, Stadium stadium){
+		this.numAgents = numAgents;
+		this.stadium = stadium;
 	}
 	public void step(SimState state) {
 		schedule = state.schedule;
-		if (schedule.getSteps() > 0){
+		if (schedule.getSteps() > 10){
 			if (!(pressureList.isEmpty())){
 				for (Map.Entry<RoomAgent, Integer> entry : pressureList.entrySet()) {
 				    RoomAgent key = entry.getKey();
@@ -54,7 +58,18 @@ public class Results implements Steppable{
 			stoppMe.stop();
 		}
 		pressureList.clear();
-		
+		switch (stadium) {
+		case TEST:
+			if (schedule.getSteps() >= 1000){
+				String steps = String.valueOf(schedule.getSteps());
+				LOGGER.info("ABBRUCH;STEPS:{}, TOTE:{}, Deadlock Agents: {}",steps, deadAgents, numAgents);
+				state.kill();
+			}
+			break;
+
+		default:
+			break;
+		}
 	}
 	public synchronized void addAgentToPressureList(RoomAgent a, int pressure){
 		if (pressureList.containsKey(a)){
@@ -79,5 +94,9 @@ public class Results implements Steppable{
 	
 	public void setDisplayList (ArrayList<Display> dispList){
 		displayList = dispList;
+	}
+	
+	public void setNumAgents(int numAgents){
+		this.numAgents = numAgents;
 	}
 }

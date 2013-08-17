@@ -54,7 +54,7 @@ public class Display extends MasonGeometry implements Steppable{
 		
 		RoomAgent a = agentlist.get(state.random.nextInt(agentlist.size()));
 		Tile agentTile = a.getPositionAsTile(state);
-		LOGGER.info("Dangerindex geändert für Agent {}", a.getId());
+//		LOGGER.info("Dangerindex geändert für Agent {}", a.getId());
 	}
 
 	private int dangerInObservedTiles() {
@@ -65,14 +65,18 @@ public class Display extends MasonGeometry implements Steppable{
 				agentlist.add(t.getPotentialAgentsList().get(0));
 			}
 		}
-		int tiles = observingTiles.size();
-		if (tiles == 0){
+		double area = this.getGeometry().getArea();
+		if (area == 0){
 			return 0;
 		}
 		BigDecimal tmp = BigDecimal.valueOf(agentlist.size());
-		tmp = tmp.divide(BigDecimal.valueOf(tiles), 2, RoundingMode.HALF_UP);
-		tmp = tmp.multiply(BigDecimal.TEN);
-		int dangerFromAgents = tmp.setScale(0, RoundingMode.HALF_UP).intValue();
+		tmp = tmp.divide(BigDecimal.valueOf(area), 2, RoundingMode.HALF_UP);
+		int dangerFromAgents = 0;
+		int roundTmp = tmp.setScale(0, RoundingMode.CEILING).intValue();
+		if (tmp.compareTo(BigDecimal.valueOf(3)) > 0){
+			
+			dangerFromAgents = 1 + roundTmp;
+		} else dangerFromAgents = roundTmp;
 		int dangerFromEnvironment = calcDangerFromEnvironment();
 		return Math.max(dangerFromAgents, dangerFromEnvironment);
 	}

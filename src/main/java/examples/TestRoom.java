@@ -15,7 +15,7 @@ import com.vividsolutions.jts.geom.Envelope;
 public class TestRoom implements RoomInterface{
 	
 	
-    public static int NUM_AGENTS = 1450;
+    public static int NUM_AGENTS = 15;
     private int maxMoveRate = 4; //in Tiles 
     private int maxPatience = 15;
     private GeomVectorField movingSpace, obstacles, destinations, starts, displays;

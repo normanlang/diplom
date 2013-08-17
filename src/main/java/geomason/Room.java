@@ -39,7 +39,7 @@ public class Room extends SimState{
 		public static final double TILESIZE = 0.5;
 		public static final int WIDTH = 800; 
 		public static final int HEIGHT = 600;
-	    public int NUM_AGENTS;
+	    public int numAgents;
 	    public static GeomVectorField agents = new GeomVectorField(WIDTH, HEIGHT);   
 	    public GeomVectorField movingSpace = new GeomVectorField();
 	    public GeomVectorField obstacles = new GeomVectorField();
@@ -125,7 +125,7 @@ public class Room extends SimState{
 			movingSpace = preussen.getMovingSpace();
 			obstacles = preussen.getObstacles();
 			destinations = preussen.getDestinations();
-			NUM_AGENTS = preussen.getNUM_AGENTS();
+			numAgents = preussen.getNUM_AGENTS();
 			starts = preussen.getStarts();
 			maxMoveRate = preussen.getMaxMoveRateInTiles();
 			maxPatience = preussen.getMaxPatience();
@@ -137,7 +137,7 @@ public class Room extends SimState{
 			movingSpace = testroomSmall.getMovingSpace();
 			obstacles = testroomSmall.getObstacles();
 			destinations = testroomSmall.getDestinations();
-			NUM_AGENTS = testroomSmall.getNUM_AGENTS();
+			numAgents = testroomSmall.getNUM_AGENTS();
 			starts = testroomSmall.getStarts();
 			maxMoveRate = testroomSmall.getMaxMoveRateInTiles();
 			maxPatience = testroomSmall.getMaxPatience();
@@ -148,7 +148,7 @@ public class Room extends SimState{
 			movingSpace = testroom.getMovingSpace();
 			obstacles = testroom.getObstacles();
 			destinations = testroom.getDestinations();
-			NUM_AGENTS = testroom.getNUM_AGENTS();
+			numAgents = testroom.getNUM_AGENTS();
 			starts = testroom.getStarts();
 			maxMoveRate = testroom.getMaxMoveRateInTiles();
 			maxPatience = testroom.getMaxPatience();
@@ -161,12 +161,13 @@ public class Room extends SimState{
 			   tmpStarts.shuffle(random);
 			   Bag tmpDests = new Bag();
 			   tmpDests.addAll(allDestinationCenterTiles);
-		        for (int i = 0; i < NUM_AGENTS; i++){
+		        for (int i = 0; i < numAgents; i++){
 		        	if (movingSpace.getGeometries().isEmpty()){
 		        		throw new RuntimeException("No polygons found.");
 		            }
 		        	if (tmpStarts.isEmpty()){
-		        		LOGGER.error("All start tiles filled. "+(NUM_AGENTS-i)+" agents left out");
+		        		LOGGER.error("All start tiles filled. "+(numAgents-i)+" agents left out");
+		        		results.setNumAgents(i);
 		        		break;
 		        	}
 		        	Tile startTile = (Tile) tmpStarts.pop();
@@ -385,16 +386,16 @@ public class Room extends SimState{
 		
 		// Methoden für UI und main
 		public int getNumAgents(){ 
-	    	return NUM_AGENTS; 
+	    	return numAgents; 
 	    }
 	    
 	    public void setNumAgents(int a){ 
-	    	if (a > 0) NUM_AGENTS = a; 
+	    	if (a > 0) numAgents = a; 
 	    }
 		@Override
 	    public void start(){
 	        super.start();
-	        results = new Results(NUM_AGENTS);
+	        results = new Results(numAgents, stadium);
 	        Stoppable stoppable = schedule.scheduleRepeating(results, 1);
 	        results.setStoppMe(stoppable);
 	        ArrayList<Display> dl = addDisplays();

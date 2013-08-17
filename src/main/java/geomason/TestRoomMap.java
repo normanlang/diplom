@@ -114,7 +114,7 @@ public class TestRoomMap implements TileBasedMap{
 				height,
 				max);
 		int x = 0;
-		RoomAgent a = new RoomAgent(fakeAgentID, 1, Integer.MAX_VALUE, Integer.MAX_VALUE, new Tile(0, 0), new Results(room.NUM_AGENTS)); //fakeAgent
+		RoomAgent a = new RoomAgent(fakeAgentID, 1, Integer.MAX_VALUE, Integer.MAX_VALUE, new Tile(0, 0), new Results(room.numAgents, stadium)); //fakeAgent
 		for (int tx=0;tx< width; tx++){
 			for (int ty=0;ty<height; ty++){
 				Bag dests  = new Bag();
