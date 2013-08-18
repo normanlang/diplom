@@ -52,6 +52,7 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 	private Tile actualTile;
 	private boolean destchanger;
 	private boolean deadlock;
+
 	
     
     public RoomAgent(int id, int moveRate, int maxMoveRate, int maxPatience, Tile destinationTile, Results result){
@@ -66,10 +67,12 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     public void step(SimState state){
 		roomState = (Room)state;
 		deadlock = checkForDeadLock();
-        //weiter gehts
     	destchanger = false;
     	for (int movestep=0; movestep<moveRate; movestep++){   		
     		moveAgent(roomState);
+    		if (deadlock && moveRate%2 == 0){
+    			return;
+    		}
     		deadlock  =false;
     		if (end || destchanger) return;
     	}
@@ -78,12 +81,6 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     private void moveAgent(SimState state){
     	actualTile = getActualTile(roomState);
     	if (isTargetReached(actualTile)){
-//    		LOGGER.info("Agent {} hat Ziel erreicht (MoveRate:{}, Ziel:({},{}),Steps:{})",
-//    					id,
-//    					moveRate,
-//    					destTile.getX(),
-//    					destTile.getY(),
-//    					String.valueOf(roomState.schedule.getSteps()));
     		if (stoppMe == null){
     			throw new RuntimeException("Stoppable nicht gesetzt");
     		}
@@ -196,6 +193,14 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     		return shortest;
     	}
     	hmapWithTiles.remove(shortest);
+    	boolean randomBool = false;
+    	for (Map.Entry<Tile, Integer> entry : hmapWithTiles.entrySet()){
+    		Tile key = entry.getKey();
+    		randomBool = roomState.random.nextBoolean();
+    		if (randomBool){
+    			return key;
+    		}
+    	}
     	Tile nextshortest = hmapWithTiles.entrySet().iterator().next().getKey();
 		return nextshortest;
 	}

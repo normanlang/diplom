@@ -1,6 +1,6 @@
 package geomason;
 
-import static geomason.TestRoomMap.STATIC_MAP_TILES_CSV;
+import static geomason.RoomMap.STATIC_MAP_TILES_CSV;
 import examples.Preussenstadion;
 import examples.TestRoom;
 import examples.TestRoomSmall;
@@ -50,7 +50,7 @@ public class Room extends SimState{
 		private Bag allTilesOfDestinations = new Bag();
 		private Bag allTilesOfStarts = new Bag();
 		private Bag allTilesOfDisplays = new Bag();
-	    private TestRoomMap map;
+	    private RoomMap map;
 	    private Bag allDestinationCenterTiles = new Bag();
 	    private int maxMoveRate;
 	    private int maxPatience;
@@ -60,9 +60,9 @@ public class Room extends SimState{
 	    
 		public Room(long seed) {
 			super(seed);
-			setStadium(stadium.TEST);
+			setStadium(stadium.PREUSSEN);
 			LOGGER.info("Daten erfolgreich geladen");
-	        map = new TestRoomMap(this);
+	        map = new RoomMap(this);
 	        LOGGER.info("Erzeuge alle Start- und Zielzellen");
 	        getAllDestinationsAndStartsTiles();
 	        LOGGER.info("Start- und Zielzellen erfolgreich erzeugt");

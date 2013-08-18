@@ -26,11 +26,11 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LinearRing;
 import com.vividsolutions.jts.geom.Polygon;
 
-public class TestRoomMap implements TileBasedMap{
+public class RoomMap implements TileBasedMap{
 
 	public static final String STATIC_MAP_TILES_CSV = "static-map_tiles.csv";
 
-	public static final Logger LOGGER = LoggerFactory.getLogger(TestRoomMap.class);
+	public static final Logger LOGGER = LoggerFactory.getLogger(RoomMap.class);
 	
 	private int width = 0, height = 0;
 	private double minX, minY;
@@ -42,7 +42,7 @@ public class TestRoomMap implements TileBasedMap{
 
 	private boolean append = true;
 
-	public TestRoomMap(Room state){
+	public RoomMap(Room state){
 		room = state;
 		width = room.getWidthInTiles();
 		height = room.getHeightInTiles();
