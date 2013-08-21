@@ -16,7 +16,6 @@
 
 		Additional appenders can be defined freely.
 	-->
-
 	<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<file>${logFile}.log</file>
 		
@@ -29,7 +28,8 @@
 			</timeBasedFileNamingAndTriggeringPolicy>
 		</rollingPolicy>
 		<encoder>
-			<pattern>%date %level [%thread] [%file:%line] %msg%n</pattern>
+			<!-- <pattern>%date %level [%thread] [%file:%line] %msg%n</pattern> -->
+			<pattern>%date %level %msg%n</pattern> 
 		</encoder>
 	</appender>
 
@@ -38,7 +38,6 @@
 			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{0} - %msg%n</pattern>
 		</encoder>
 	</appender>
-
 	<logger name="geomason" level="TRACE" />
 
 	<root level="INFO">

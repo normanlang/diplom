@@ -35,7 +35,8 @@ public class Results implements Steppable{
 		schedule = state.schedule;
 		String steps = String.valueOf(schedule.getSteps());
 		if (schedule.getSteps()%100 == 0){
-			LOGGER.info("STEP:{}, AGENTEN GERETTET:{}, AGENTEN TOT:{}",
+			LOGGER.info("Instance:{}, STEP:{}, AGENTEN GERETTET:{}, AGENTEN TOT:{}",
+					Long.toString(state.seed()),
 					steps,
 					((Room) state).getNumAgents() - numAgents,
 					deadAgents);
@@ -46,7 +47,8 @@ public class Results implements Steppable{
 				    RoomAgent key = entry.getKey();
 				    int value = entry.getValue();
 				    if (value >= 5*key.getMaxMoveRate()){
-				    	LOGGER.info("Agent {} TOT (Step: {})",
+				    	LOGGER.info("Instance:{}, Agent {} TOT (Step: {})",
+				    			Long.toString(state.seed()),
 				    			key.getId(),
 				    			schedule.getSteps());
 				    	deadAgents++;
@@ -60,20 +62,20 @@ public class Results implements Steppable{
 			for (Display d : displayList){
 				d.stoppMe();
 			}
-			LOGGER.info("ENDE;STEPS:{}, TOTE:{}",steps, deadAgents);
+			LOGGER.info("Instance:{}, ENDE;STEPS:{}, TOTE:{}",Long.toString(state.seed()), steps, deadAgents);
 			stoppMe.stop();
 		}
 		pressureList.clear();
 		switch (stadium) {
 		case TEST:
 			if (schedule.getSteps() >= 1000){
-				LOGGER.info("ABBRUCH;STEPS:{}, TOTE:{}, Deadlock Agents: {}",steps, deadAgents, numAgents);
+				LOGGER.info("Instance:{}, ABBRUCH;STEPS:{}, TOTE:{}, Deadlock Agents: {}",Long.toString(state.seed()), steps, deadAgents, numAgents);
 				state.kill();
 			}
 			break;
 		case PREUSSEN:
 			if (schedule.getSteps() >= 4500){
-				LOGGER.info("ABBRUCH;STEPS:{}, TOTE:{}, Deadlock Agents: {}",steps, deadAgents, numAgents);
+				LOGGER.info("Instance:{}, ABBRUCH;STEPS:{}, TOTE:{}, Deadlock Agents: {}",Long.toString(state.seed()), steps, deadAgents, numAgents);
 				state.kill();
 			}
 		default:

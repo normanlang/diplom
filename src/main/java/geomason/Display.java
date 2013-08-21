@@ -8,15 +8,13 @@ import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.vividsolutions.jts.geom.Point;
-
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.engine.Stoppable;
 import sim.util.Bag;
 import sim.util.geo.MasonGeometry;
 
-public class Display extends MasonGeometry implements Steppable{
+public class Display extends MasonGeometry implements Steppable {
 
 	/**
 	 * 
@@ -26,57 +24,70 @@ public class Display extends MasonGeometry implements Steppable{
 	private ArrayList<Display> displayList = new ArrayList<Display>();
 	private Bag observingTiles = new Bag();
 	private int dangerIndex = 0;
-    private Stoppable stoppMe;
-    private ArrayList<RoomAgent> agentlist = new ArrayList<RoomAgent>();
-    private HashMap<Tile, Integer> destinationList = new HashMap<Tile, Integer>();
-	
-	public Display(Bag observBag, Tile centerTile){
+	private Stoppable stoppMe;
+	private ArrayList<RoomAgent> agentlist = new ArrayList<RoomAgent>();
+	private HashMap<Tile, Integer> destinationList = new HashMap<Tile, Integer>();
+
+	/**
+	 *  constructs the display
+	 * @param observBag Bag with all Tiles which should be observed
+	 * @param centerTile the Center-Tile of the observed polygon
+	 */
+	public Display(Bag observBag, Tile centerTile) {
 		observingTiles = observBag;
 		destinationList = centerTile.getDestinations();
 
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see sim.engine.Steppable#step(sim.engine.SimState)
+	 */
 	public void step(SimState state) {
 		agentlist.clear();
 		dangerIndex = dangerInObservedTiles();
-		if (dangerIndex >= 5){
+		if (dangerIndex >= 5) {
 			changeDestinationForRandomAgent(state);
-			
+
 		}
 	}
 
 	private void changeDestinationForRandomAgent(SimState state) {
-		//TODO wieviele sehen das display?
-		// alle agenten im bereich nachzählen wie oft welches ziel vorkommt? das rausnehmen und das nächst kürzere nehmen?
-		for (RoomAgent ra : agentlist){
-			
+		// TODO wieviele sehen das display?
+		// alle agenten im bereich nachzählen wie oft welches ziel vorkommt? das
+		// rausnehmen und das nächst kürzere nehmen?
+		for (RoomAgent ra : agentlist) {
+
 		}
-		
+
 		RoomAgent a = agentlist.get(state.random.nextInt(agentlist.size()));
 		Tile agentTile = a.getPositionAsTile(state);
-//		LOGGER.info("Dangerindex geändert für Agent {}", a.getId());
+		// LOGGER.info("Dangerindex geändert für Agent {}", a.getId());
 	}
 
+	/**
+	 * @return the danger index for the observed polygon
+	 */
 	private int dangerInObservedTiles() {
 
-		for (Object o : observingTiles){
+		for (Object o : observingTiles) {
 			Tile t = (Tile) o;
-			if (!(t.getPotentialAgentsList().isEmpty())){
+			if (!(t.getPotentialAgentsList().isEmpty())) {
 				agentlist.add(t.getPotentialAgentsList().get(0));
 			}
 		}
 		double area = this.getGeometry().getArea();
-		if (area == 0){
+		if (area == 0) {
 			return 0;
 		}
 		BigDecimal tmp = BigDecimal.valueOf(agentlist.size());
 		tmp = tmp.divide(BigDecimal.valueOf(area), 2, RoundingMode.HALF_UP);
 		int dangerFromAgents = 0;
 		int roundTmp = tmp.setScale(0, RoundingMode.CEILING).intValue();
-		if (tmp.compareTo(BigDecimal.valueOf(3)) > 0){
-			
+		if (tmp.compareTo(BigDecimal.valueOf(3)) > 0) {
+
 			dangerFromAgents = 1 + roundTmp;
-		} else dangerFromAgents = roundTmp;
+		} else
+			dangerFromAgents = roundTmp;
 		int dangerFromEnvironment = calcDangerFromEnvironment();
 		return Math.max(dangerFromAgents, dangerFromEnvironment);
 	}
@@ -94,22 +105,26 @@ public class Display extends MasonGeometry implements Steppable{
 	}
 
 	/**
-	 * @param displayList the displayList to set
+	 * @param displayList
+	 *            the displayList to set
 	 */
 	public void setDisplayList(ArrayList<Display> displayList) {
 		this.displayList = displayList;
 	}
 
 	/**
-	 * @param stoppMe the stoppMe to set
+	 * @param stoppMe
+	 *            the stoppMe to set
 	 */
 	public void setStoppMe(Stoppable stoppMe) {
 		this.stoppMe = stoppMe;
 	}
-	
-	public void stoppMe(){
+
+	/**
+	 * stops this Steppable-object. It is removed from the schedule 
+	 */
+	public void stoppMe() {
 		stoppMe.stop();
 	}
-	
 
 }

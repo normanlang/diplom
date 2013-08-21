@@ -1,5 +1,6 @@
 package examples;
 
+
 import geomason.Room;
 
 public class ParallelStart {
@@ -29,6 +30,5 @@ public class ParallelStart {
 		t1.start();
 		t2.start();
 		t3.start();
-		System.exit(0);
 	}
 }

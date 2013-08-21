@@ -55,6 +55,16 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 
 	
     
+    /**
+     * 
+     * constructs a RommAgent
+     * @param id the id of RoomAgent 
+     * @param moveRate the moveRate in tiles
+     * @param maxMoveRate the maxMoveRate for this RoomAgent, defined by {@link Room} in tiles
+     * @param maxPatience the maximum patience in steps for this RoomAgent 
+     * @param destinationTile the destination tile where the RoomAgent wants to go
+     * @param result the observer-Steppable {@link Results} which logs and handles the RoomAgents at the end
+     */
     public RoomAgent(int id, int moveRate, int maxMoveRate, int maxPatience, Tile destinationTile, Results result){
        	this.id = id;
        	this.moveRate = moveRate;
@@ -64,6 +74,9 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
        	this.result = result;
     }
 		
+    /* (non-Javadoc)
+     * @see sim.engine.Steppable#step(sim.engine.SimState)
+     */
     public void step(SimState state){
 		roomState = (Room)state;
 		deadlock = checkForDeadLock();
@@ -78,6 +91,9 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     	}
     }
     
+    /**
+     * @param state the {@link SimState} where this object is initialized
+     */
     private void moveAgent(SimState state){
     	actualTile = getActualTile(roomState);
     	if (isTargetReached(actualTile)){
@@ -96,13 +112,6 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     			randomTile = (Tile) allDestTiles.get(roomState.random.nextInt(allDestTiles.size()));
     		}
     		setDestTile(randomTile);
-//    		LOGGER.info("Agent {} hat Ziel gewechselt (aktPos:({},{}), Ziel:({},{}),Steps:{})",
-//					id,
-//					actualTile.getX(),
-//					actualTile.getY(),
-//					destTile.getX(),
-//					destTile.getY(),
-//					String.valueOf(state.schedule.getSteps()));
     		destinationChanger = 0;
     		if (deadlock){
     			trace.clear();
@@ -125,20 +134,13 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     		}
     		trace.add(actPoint);
         	Coordinate  coord = roomState.getCoordForTile(nextTile);
-//        	if (roomState.getAllTilesOfDestinations().contains(nextTile)){
-//        		LOGGER.info("Agent {} von ({},{}) nach ({},{}) - Ziel:({},{})",
-//        				id,
-//        				actualTile.getX(),
-//        				actualTile.getY(),
-//        				nextTile.getX(),
-//        				nextTile.getY(),
-//        				String.valueOf(destTile.getX()),
-//        				String.valueOf(destTile.getY()));
-//        	}
     		moveTo(coord);
     	}
     }
 
+	/**
+	 * @return the trace as readable {@link String}
+	 */
 	private String logTrace() {
 		StringBuffer sb = new StringBuffer();
 		for (java.awt.Point p : trace) {
@@ -151,6 +153,15 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 		return sb.toString();
 	}
 
+	/**
+	 * gets all tiles in the Moore-Neighbourhood, calculates which of those 
+	 * has the cheapest costs, is empty and usable and returns that tile. If 
+	 * this RoomAgent is in a deadlock, this method returns a random tile from 
+	 * its Moore-Neighbourhood, which is empty and usable.
+	 * @param actTile
+	 * @param state
+	 * @return the tile with the cheapest costs or if this Roomagent is in a deadlock, a random tile
+	 */
 	private Tile getTileToMoveTo(Tile actTile, SimState state) {
 		Map<Tile, Integer> hmapWithTiles = new HashMap<Tile, Integer>();
 		Bag neighbourTiles = roomState.allTilesOfMap.getObjectsWithinDistance(actTile.getGeometry().getCentroid(), Room.TILESIZE);
@@ -169,18 +180,11 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     			int length = tile.getDestinations().get(destTile);
     			if (length != Integer.MAX_VALUE){
     				length = length + getCostsForTarget(tile, state);
-    				hmapWithTiles.put(tile, length);
-//    				if (state.schedule.getSteps() >= 300){
-//    					System.out.print("("+tile.getX()+","+tile.getY()+")->"+length+" ;");
-//    				}
-    				
+    				hmapWithTiles.put(tile, length);    				
     			}
     		}
     		
     	}
-//		if (state.schedule.getSteps() >= 300){
-//			System.out.println("");
-//		}
     	hmapWithTiles = sortByValue(hmapWithTiles);
     	if (hmapWithTiles.isEmpty()){
     		calcPressure(neighbourTiles, state);
@@ -188,8 +192,6 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     	}
     	Tile shortest = hmapWithTiles.entrySet().iterator().next().getKey();
     	if (!deadlock || hmapWithTiles.size() == 1){
-//        	LOGGER.debug("Kürzester Weg für Agent {}: ({},{}),Kosten:{},besetzt durch {}",
-//        	d		shortest.getPotentialAgentsList());
     		return shortest;
     	}
     	hmapWithTiles.remove(shortest);
@@ -204,7 +206,13 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     	Tile nextshortest = hmapWithTiles.entrySet().iterator().next().getKey();
 		return nextshortest;
 	}
-	 private void calcPressure(Bag neighbourTiles, SimState state) {
+	 /**
+	  * calculates the pressure for the tile, where it wants to go, but which is already
+	  * occupied
+	 * @param neighbourTiles the tiles in the Moore-Neighbourhood
+	 * @param state the {@link SimState} of this RoomAgent
+	 */
+	private void calcPressure(Bag neighbourTiles, SimState state) {
 		Map<Tile, Integer> hmapWithTiles = new HashMap<Tile, Integer>();
     	for (Object o : neighbourTiles){
     		Tile tile = (Tile) o;
@@ -233,6 +241,11 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     	
 	}
 
+	/**
+	 * checks the trace if a place is already visited more than 5 times
+	 * if yes - true, else false
+	 * @return {@link Boolean} 
+	 */
 	private boolean checkForDeadLock() {
 		 if (trace.size()-11 >=0){
 				List<java.awt.Point> sublist = trace.subList(trace.size()-11, trace.size()-1);
@@ -258,6 +271,11 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 		
 	}
 
+	/**
+	 * sort for generic maps, which sorts the map by value 
+	 * @param map to sort by value
+	 * @return {@link LinkedHashMap}
+	 */
 	private static <K, V extends Comparable<? super V>> Map<K, V> sortByValue( Map<K, V> map ) {
 	     java.util.List<Map.Entry<K, V>> list = new LinkedList<Map.Entry<K, V>>( map.entrySet() );
 	     Collections.sort( list, new Comparator<Map.Entry<K, V>>(){
@@ -275,6 +293,13 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
    
 
 	
+    /**
+     * calculates the cost for the target tile including influences of other 
+     * RoomAgents on the target tile
+     * @param tile the target tile
+     * @param state the {@link SimState} of this {@link RoomAgent}
+     * @return the costs as {@link Integer}
+     */
     private int getCostsForTarget(Tile tile, SimState state) {
 		Tile targetTile = tile;
 		int costs = 0;
@@ -291,6 +316,11 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 		return costs;
 	}
     
+	/**
+	 * get all agents which a in a radius of maxMoveDistance
+	 * @param actTile the actual postion as tile
+	 * @return {@link Bag} 
+	 */
 	private Bag getAgentsInMaxMoveRateDistance(Tile actTile) {
 		Bag agentBag = Room.agents.getObjectsWithinDistance(actTile.getGeometry().getCentroid(), maxMoveRate*Room.TILESIZE);	
 		return agentBag;

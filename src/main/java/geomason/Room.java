@@ -59,8 +59,9 @@ public class Room extends SimState{
 	    private Stadium stadium;
 	    
 		public Room(long seed) {
-			super(seed);
-			setStadium(stadium.PREUSSEN);
+
+			super(seed); 
+			setStadium(stadium.TESTSMALL);
 			LOGGER.info("Daten erfolgreich geladen");
 	        map = new RoomMap(this);
 	        LOGGER.info("Erzeuge alle Start- und Zielzellen");
@@ -278,6 +279,7 @@ public class Room extends SimState{
 			return heightInTiles;
 		}
 		
+
 		public int getStandardCostsForTargetTile(Tile actualPosition, Tile targetTile, int costs) {
 			int x = targetTile.getX() - actualPosition.getX();
 			int y = targetTile.getY() - actualPosition.getY();
@@ -300,8 +302,9 @@ public class Room extends SimState{
 			return costs;
 		}
 		
-		
 	    /**
+	     * @param actualPosition
+	     * @param owncost
 	     * @return {@link ArrayList} CostTile - Elemente die außerhalb der tile-map liegen kommen nicht vor
 	     */
 	    private Bag calcCostsWithoutInfluences(Tile actualPosition, int owncost){
@@ -403,7 +406,7 @@ public class Room extends SimState{
 	        //entferne eventuell noch vorhandene Agenten
 	        agents.clear(); 
 	        //füge neue Agenten hinzu
-	        LOGGER.info("Füge Agenten hinzu...");
+	        LOGGER.info("Instance:{}, Füge Agenten hinzu...",Long.toString(this.seed()));
 	        addAgents();
 	        //setze den minimum bounding rectangle anhand des Bewegungsraums
 	        agents.setMBR(movingSpace.getMBR());

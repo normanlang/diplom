@@ -58,6 +58,9 @@ public class RoomMap implements TileBasedMap{
 		LOGGER.info("Gitter erzeugt");
 	}
 
+	/**
+	 * build the room map in tiles 
+	 */
 	private void buildRoomMap() {
 		double xTile = Math.floor(minX);
 		double yTile = Math.floor(minY);
@@ -106,36 +109,52 @@ public class RoomMap implements TileBasedMap{
 		
 	}
 	
+	/**
+	 * creates the static floor field for this map
+	 * @param allDestinationCenterAsTiles the evacuation points as tiles
+	 * @param stadium the {@link Stadium}
+	 */
 	public void createStaticFloorField(Bag allDestinationCenterAsTiles, RoomAgent.Stadium stadium){
-		//gehe alle tiles der map durch
 		int max = width*height;
 		LOGGER.trace("Start processing tiles. Width: {}, Height: {}, Tiles Gesamt: {}",
 				width,
 				height,
 				max);
 		int x = 0;
+		//erzeuge fake agent fuer die Routenberechnung
 		RoomAgent a = new RoomAgent(fakeAgentID, 1, Integer.MAX_VALUE, Integer.MAX_VALUE, new Tile(0, 0), new Results(room.numAgents, stadium)); //fakeAgent
+		//gehe alle tiles der map durch
 		for (int tx=0;tx< width; tx++){
 			for (int ty=0;ty<height; ty++){
 				Bag dests  = new Bag();
 				dests.addAll(allDestinationCenterAsTiles);
-				HashMap<Tile, Integer> destinationsWithLength = new HashMap<Tile, Integer>(); 
+				//map die alle destination-tiles mit der distanz (in tiles) von der aktuellen Zelle
+				//zur destination-tile verknuepft
+				HashMap<Tile, Integer> destinationsWithLength = new HashMap<Tile, Integer>();
+				//nehme das aktuelle tile
 				Tile currentTile = getTile(tx, ty);
+				//wenn es benutzbar ist, berechne fuer alle destination tiles den kosten-
+				//guenstigsten weg (A*)
 				if (currentTile.isUsable()){
 					while (!dests.isEmpty()){
 						Tile destTile = (Tile) dests.pop();
 						Path p = room.calcNewPath(a, currentTile, destTile);
+						//p ist null, wenn kein weg berechnet werden kann
 						if (p == null){
+							//wenn das aktuelle tile = eines der destTiles ist, dann ist der weg 0
 							if (currentTile.equals(destTile)){
 								destinationsWithLength.put(destTile, 0);
 							} else {
+								//sonst ist der Weg der max-Integer-Wert
 								destinationsWithLength.put(destTile, Integer.MAX_VALUE);
 							}
+							//wenn ein weg gefunden wurde, dann fuege die Distanz hinzu 
 						} else{
 							destinationsWithLength.put(destTile, p.getLength());
 						}
 					}
 					currentTile.setDestinations(destinationsWithLength);
+					//speichere das ergebnis zur optimierung in eine datei
 					writeTileInformationToFile(stadium,currentTile);
 				}
 				x++;
