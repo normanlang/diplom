@@ -18,7 +18,7 @@ import com.vividsolutions.jts.geom.Envelope;
 public class TestRoomSmall implements RoomInterface{
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(TestRoomSmall.class);
-    public final int NUM_AGENTS = 200;
+    public final int NUM_AGENTS = 5000;
     private int maxMoveRate = 5; //in Tiles 
     private int maxPatience = 15;
     private GeomVectorField movingSpace, obstacles, destinations, starts, displays;

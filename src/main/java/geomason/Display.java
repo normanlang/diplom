@@ -4,9 +4,14 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
+import org.newdawn.slick.util.pathfinding.Path;
+import org.newdawn.slick.util.pathfinding.Path.Step;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.vividsolutions.jts.geom.Geometry;
 
 import sim.engine.SimState;
 import sim.engine.Steppable;
@@ -26,17 +31,21 @@ public class Display extends MasonGeometry implements Steppable {
 	private int dangerIndex = 0;
 	private Stoppable stoppMe;
 	private ArrayList<RoomAgent> agentlist = new ArrayList<RoomAgent>();
-	private HashMap<Tile, Integer> destinationList = new HashMap<Tile, Integer>();
+	private HashMap<Tile, Path> destinationList = new HashMap<Tile, Path>();
+	private boolean dynamic;
+	private boolean changeDestination = false;
+	private boolean dangerInfoSend = false;
+	private Geometry dangerArea;
 
 	/**
 	 *  constructs the display
 	 * @param observBag Bag with all Tiles which should be observed
 	 * @param centerTile the Center-Tile of the observed polygon
 	 */
-	public Display(Bag observBag, Tile centerTile) {
+	public Display(Bag observBag, boolean dynamic, HashMap<Tile, Path> destinationList) {
 		observingTiles = observBag;
-		destinationList = centerTile.getDestinations();
-
+		this.destinationList = destinationList;
+		this.dynamic = dynamic;
 	}
 
 	/* (non-Javadoc)
@@ -45,23 +54,68 @@ public class Display extends MasonGeometry implements Steppable {
 	public void step(SimState state) {
 		agentlist.clear();
 		dangerIndex = dangerInObservedTiles();
-		if (dangerIndex >= 5) {
-			changeDestinationForRandomAgent(state);
-
+		if (dangerIndex >= 5 && dangerInfoSend == false) {
+			informDisplays(true);
+			dangerInfoSend = true;
+		}
+		if (dangerIndex <5 && dangerInfoSend == true){
+			informDisplays(false);
+			dangerInfoSend = false;
+		}
+		if (changeDestination){
+			changeDestination(state);
 		}
 	}
 
-	private void changeDestinationForRandomAgent(SimState state) {
-		// TODO wieviele sehen das display?
-		// alle agenten im bereich nachzählen wie oft welches ziel vorkommt? das
-		// rausnehmen und das nächst kürzere nehmen?
-		for (RoomAgent ra : agentlist) {
-
+	private void informDisplays(boolean b) {
+		if (displayList.contains(this)){
+			displayList.remove(this);
 		}
+		for (Display d : displayList){
+			d.setChangeDestination(b, this.geometry);
+			LOGGER.info("DANGER: {}",b);
+		}		
+	}
 
-		RoomAgent a = agentlist.get(state.random.nextInt(agentlist.size()));
-		Tile agentTile = a.getPositionAsTile(state);
-		// LOGGER.info("Dangerindex geändert für Agent {}", a.getId());
+	private void changeDestination(SimState state) {
+		if (dynamic){
+			Tile newDest = null;
+			int length = Integer.MAX_VALUE;
+			for(Map.Entry<Tile, Path> entry : destinationList.entrySet()){
+				Tile key = entry.getKey();
+				Path val = entry.getValue();
+				ArrayList<Tile> pathAsTileList = setPathAsTileList(state, val);
+				for (Tile t : pathAsTileList){
+					if (dangerArea.isWithinDistance(t.getGeometry().getCentroid(), Room.TILESIZE)){
+						break;
+					}
+				}
+				if (val.getLength()< length){
+					length = val.getLength();
+					newDest = key;
+				}
+			}
+			if (newDest != null){
+				changeDestinationForRandomAgents(state, newDest);
+			}
+		}
+	}
+
+	private void changeDestinationForRandomAgents(SimState state, Tile newDest) {
+		int percent = ((Room)state).possibility;
+		ArrayList<RoomAgent> tmpAgentlist = new ArrayList<RoomAgent>();
+		tmpAgentlist.addAll(agentlist);
+		BigDecimal tmp = BigDecimal.valueOf(agentlist.size());
+		tmp = tmp.multiply(BigDecimal.valueOf(percent));
+		tmp = tmp.divide(new BigDecimal("100"), RoundingMode.HALF_UP);
+		int agentsRecognized = tmp.setScale(0, RoundingMode.HALF_UP).intValue();
+		for (int i = 0; i < agentsRecognized; i++){
+			int index = state.random.nextInt(tmpAgentlist.size());
+			RoomAgent a = tmpAgentlist.get(index);
+			a.setDestTile(newDest);
+			tmpAgentlist.remove(index);
+		}
+		LOGGER.info("Dangerindex geändert für {} Agenten", agentsRecognized);
 	}
 
 	/**
@@ -97,6 +151,15 @@ public class Display extends MasonGeometry implements Steppable {
 		return 0;
 	}
 
+	private ArrayList<Tile> setPathAsTileList(SimState state, Path path){
+	    ArrayList<Tile> pathAsTileList = new ArrayList<Tile>(); //TODO: evtl .clear() machen, wenn ram voll läuft
+	    for (int i=0; i< path.getLength();i++){
+	    	Step step = path.getStep(i);
+	    	Tile t = ((Room)state).getTile(step.getX(), step.getY());
+	    	pathAsTileList.add(i, t);
+		}
+	    return pathAsTileList;
+	}
 	/**
 	 * @return the displayList
 	 */
@@ -125,6 +188,14 @@ public class Display extends MasonGeometry implements Steppable {
 	 */
 	public void stoppMe() {
 		stoppMe.stop();
+	}
+	/**
+	 * @param changeDestination the changeDestination to set
+	 */
+	public synchronized void setChangeDestination(boolean changeDestination, Geometry g) {
+		dangerArea = g;
+		this.changeDestination = changeDestination;
+		LOGGER.info("DANGER ERHALTEN");
 	}
 
 }

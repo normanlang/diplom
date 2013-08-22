@@ -64,6 +64,7 @@ public class Results implements Steppable{
 			}
 			LOGGER.info("Instance:{}, ENDE;STEPS:{}, TOTE:{}",Long.toString(state.seed()), steps, deadAgents);
 			stoppMe.stop();
+			state.kill();
 		}
 		pressureList.clear();
 		switch (stadium) {

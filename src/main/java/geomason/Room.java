@@ -1,5 +1,6 @@
 package geomason;
 
+import static geomason.RoomAgent.fakeAgentID;
 import static geomason.RoomMap.STATIC_MAP_TILES_CSV;
 import examples.Preussenstadion;
 import examples.TestRoom;
@@ -10,6 +11,8 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.newdawn.slick.util.pathfinding.AStarPathFinder;
 import org.newdawn.slick.util.pathfinding.Mover;
@@ -39,6 +42,7 @@ public class Room extends SimState{
 		public static final double TILESIZE = 0.5;
 		public static final int WIDTH = 800; 
 		public static final int HEIGHT = 600;
+		public int possibility; 
 	    public int numAgents;
 	    public static GeomVectorField agents = new GeomVectorField(WIDTH, HEIGHT);   
 	    public GeomVectorField movingSpace = new GeomVectorField();
@@ -57,11 +61,17 @@ public class Room extends SimState{
 	    private Results results; 
 	    private Bag standardCosts;
 	    private Stadium stadium;
+	    private boolean dynamic;
 	    
 		public Room(long seed) {
 
 			super(seed); 
+			// HIER EINSTELLUNGEN FUER DIE SIMULATION VORNEHMEN!!!!
 			setStadium(stadium.TESTSMALL);
+			dynamic = true;  //dynamisch vs. statisch
+			possibility = 50; // Wahrscheinlichkeit, wieviele Agenten die Änderung des Displays mitbekommen 10, 25, 50
+			// -----------------------------------
+			LOGGER.info("dynamische Displays? {}, Wahrscheinlichkeit: {}", dynamic, possibility);
 			LOGGER.info("Daten erfolgreich geladen");
 	        map = new RoomMap(this);
 	        LOGGER.info("Erzeuge alle Start- und Zielzellen");
@@ -417,6 +427,8 @@ public class Room extends SimState{
 			Bag DisplayBag = new Bag();
 			DisplayBag.addAll(allTilesOfDisplays);
 			ArrayList<Display> displList = new ArrayList<Display>();
+			HashMap<Tile, Path> destList = new  HashMap<Tile, Path>();
+			//für alle displaypolygone
 			for (Object object : displays.getGeometries()){
 				Geometry g  = ((MasonGeometry) object).getGeometry();
 				Tile centerTile = getTileByCoord(g.getCentroid().getX(), g.getCentroid().getY());
@@ -429,7 +441,17 @@ public class Room extends SimState{
 		    			DisplayBag.remove(t);
 		    		}
 		    	}
-				Display d = new Display(tilesOfMg, centerTile);
+				// ermittle alle wege zu den zielen
+				HashMap<Tile, Integer> dests = centerTile.getDestinations();
+				RoomAgent a = new RoomAgent(fakeAgentID, 1, Integer.MAX_VALUE, Integer.MAX_VALUE, new Tile(0, 0), new Results(numAgents, stadium)); //fakeAgent
+				for (Map.Entry<Tile, Integer> entry : dests.entrySet()){
+					Tile key = entry.getKey();
+					Path p = calcNewPath(a, centerTile, key);
+					if (p!=null){
+						destList.put(key, p);
+					}
+				}
+				Display d = new Display(tilesOfMg, dynamic, destList);
 	    		displList.add(d);
 	    		d.geometry = g;
 	    		Stoppable stoppable = schedule.scheduleRepeating(d);
