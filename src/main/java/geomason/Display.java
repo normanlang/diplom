@@ -78,7 +78,6 @@ public class Display extends MasonGeometry implements Steppable {
 		}
 		for (Display d : displayList){
 			d.setChangeDestination(b, this.geometry);
-//			LOGGER.info("DANGER: {}",b);
 		}
 		
 	}
@@ -89,7 +88,6 @@ public class Display extends MasonGeometry implements Steppable {
 				t.setAddCosts(0);
 			}
 		}
-		LOGGER.debug("AddCosts reset");
 	}
 	private void addAdditionalCosts(SimState state) {
 		for (Object o : observingTiles){
@@ -98,7 +96,6 @@ public class Display extends MasonGeometry implements Steppable {
 				t.setAddCosts(100 * dangerIndex);
 			}
 		}
-		LOGGER.debug("AddCosts set");
 	}
 
 	private void changeDestinationForRandomAgents(SimState state) {
