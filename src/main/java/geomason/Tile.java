@@ -3,9 +3,6 @@ package geomason;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import sim.util.geo.MasonGeometry;
 
 import com.vividsolutions.jts.geom.Geometry;
@@ -13,7 +10,7 @@ import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 
 /**
- * @author slayer
+ * @author Norman Langner
  *
  */
 public class Tile extends MasonGeometry{
@@ -27,14 +24,16 @@ public class Tile extends MasonGeometry{
 	private Polygon polygon = null;
 	private int x,y;
 	private HashMap<Tile, Integer> destinations = new HashMap<Tile, Integer>();
+	private int addCosts;
 
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(Tile.class);
+//	private static final Logger LOGGER = LoggerFactory.getLogger(Tile.class);
 	
-	public Tile(int x, int y) {
+	public Tile(int x, int y, int addCosts) {
 		super();
 		this.x = x;
 		this.y = y;
+		this.addCosts = addCosts;
 	}
 
 	public void setPolygon(Polygon p){
@@ -97,8 +96,8 @@ public class Tile extends MasonGeometry{
 	@Override
 	public String toString() {
 		return String
-				.format("Tile [agentList=%s, potentialRoomAgentList=%s, usable=%s, polygon=%s, x=%s, y=%s]",
-						potentialRoomAgentList, usable, polygon, x, y);
+				.format("Tile(x=%s, y=%s)",
+						x, y);
 	}
 
 	/**
@@ -118,6 +117,8 @@ public class Tile extends MasonGeometry{
 	public void addDestination(Tile tile, int length) {
 		destinations.put(tile, length);
 	}
+	
+	
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
@@ -148,6 +149,20 @@ public class Tile extends MasonGeometry{
 		if (y != other.y)
 			return false;
 		return true;
+	}
+
+	/**
+	 * @return the addCosts
+	 */
+	public int getAddCosts() {
+		return addCosts;
+	}
+
+	/**
+	 * @param addCosts the addCosts to set
+	 */
+	public void setAddCosts(int addCosts) {
+		this.addCosts = addCosts;
 	}
 	
 	

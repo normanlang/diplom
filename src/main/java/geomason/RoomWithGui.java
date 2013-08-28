@@ -14,7 +14,7 @@ import sim.display.GUIState;
 import sim.engine.SimState;
 import sim.portrayal.geo.GeomPortrayal;
 import sim.portrayal.geo.GeomVectorFieldPortrayal;
-import sim.portrayal.simple.OvalPortrayal2D;
+import sim.util.gui.SimpleColorMap;
 
 public class RoomWithGui extends GUIState{
 
@@ -24,6 +24,7 @@ public class RoomWithGui extends GUIState{
     GeomVectorFieldPortrayal agentPortrayal = new GeomVectorFieldPortrayal();
     GeomVectorFieldPortrayal obstaclePortrayal = new GeomVectorFieldPortrayal();
     GeomVectorFieldPortrayal displayPortrayal = new GeomVectorFieldPortrayal();
+    GeomVectorFieldPortrayal tilePortrayal = new GeomVectorFieldPortrayal();
     
     public static final Logger LOGGER = LoggerFactory.getLogger(RoomWithGui.class);
 
@@ -40,6 +41,7 @@ public class RoomWithGui extends GUIState{
         super.init(controller);
         display = new Display2D(Room.WIDTH, Room.HEIGHT, this);
         display.attach(movingSpacePortrayal, "Bewegungsraum");
+        display.attach(tilePortrayal, "Tiles");
         display.attach(agentPortrayal, "Agenten");
         display.attach(obstaclePortrayal, "Hindernisse");
         display.attach(displayPortrayal, "Displays");
@@ -52,13 +54,18 @@ public class RoomWithGui extends GUIState{
         Room roomState = (Room) state;
         agentPortrayal.setField(Room.agents);
         LOGGER.debug("anzahl agenten: {}",Room.agents.getGeometries().numObjs );
-        agentPortrayal.setPortrayalForAll(new OvalPortrayal2D(Color.RED, 4.0)); 
+//        agentPortrayal.setPortrayalForAll(new OvalPortrayal2D(Color.RED, 4.0)); 
+        agentPortrayal.setPortrayalForAll(new AgentsPortrayal(roomState.isDynamic()));
         movingSpacePortrayal.setField(roomState.movingSpace);
         movingSpacePortrayal.setPortrayalForAll(new GeomPortrayal(Color.GRAY,true));
         obstaclePortrayal.setField(roomState.obstacles);
         obstaclePortrayal.setPortrayalForAll(new GeomPortrayal(Color.BLACK,true));
         displayPortrayal.setField(roomState.displays);
         displayPortrayal.setPortrayalForAll(new GeomPortrayal(Color.GREEN,false));
+        tilePortrayal.setField(roomState.allTilesOfMap);
+        Color lightgrey = new Color(211,211,211);
+        Color darkgreen = new Color(0, 100, 0);
+        tilePortrayal.setPortrayalForAll(new TilePortrayal(new SimpleColorMap(0, 1000, lightgrey, darkgreen)));
         display.reset();
         display.setBackdrop(Color.WHITE);
         display.repaint();

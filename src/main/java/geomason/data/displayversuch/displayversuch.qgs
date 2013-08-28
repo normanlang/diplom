@@ -4,10 +4,10 @@
     <mapcanvas>
         <units>meters</units>
         <extent>
-            <xmin>405478.762749</xmin>
-            <ymin>5754084.824944</ymin>
-            <xmax>405568.536103</xmax>
-            <ymax>5754135.247928</ymax>
+            <xmin>405489.739875</xmin>
+            <ymin>5754081.789615</ymin>
+            <xmax>405593.862185</xmax>
+            <ymax>5754140.271976</ymax>
         </extent>
         <projections>0</projections>
         <destinationsrs>
@@ -24,8 +24,8 @@
         </destinationsrs>
     </mapcanvas>
     <legend updateDrawingOrder="false">
-        <legendlayer drawingOrder="-1" open="false" checked="Qt::Checked" name="hindernisse" showFeatureCount="0">
-            <filegroup open="false" hidden="false">
+        <legendlayer drawingOrder="-1" open="true" checked="Qt::Checked" name="hindernisse" showFeatureCount="0">
+            <filegroup open="true" hidden="false">
                 <legendlayerfile isInOverview="0" layerid="hindernisse20130815185705317" visible="1"/>
             </filegroup>
         </legendlayer>

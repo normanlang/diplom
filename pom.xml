@@ -7,21 +7,6 @@
   <description>Diplom Dynamic Displays</description>
   <dependencies>
   	<dependency>
-  		<groupId>com.miglayout</groupId>
-  		<artifactId>miglayout</artifactId>
-  		<version>3.7.4</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.miglayout</groupId>
-  		<artifactId>miglayout-swing</artifactId>
-  		<version>4.2</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.miglayout</groupId>
-  		<artifactId>miglayout-swt</artifactId>
-  		<version>4.2</version>
-  	</dependency>
-  	<dependency>
   		<groupId>com.vividsolutions</groupId>
   		<artifactId>jts</artifactId>
   		<version>1.13</version>
@@ -60,6 +45,11 @@
   		<groupId>org.slf4j</groupId>
   		<artifactId>slf4j-api</artifactId>
   		<version>1.7.5</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>javax.media</groupId>
+  		<artifactId>jmf</artifactId>
+  		<version>2.1.1e</version>
   	</dependency>
   </dependencies>
 </project>

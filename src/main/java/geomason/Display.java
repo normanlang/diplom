@@ -11,13 +11,14 @@ import org.newdawn.slick.util.pathfinding.Path.Step;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.vividsolutions.jts.geom.Geometry;
-
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.engine.Stoppable;
 import sim.util.Bag;
 import sim.util.geo.MasonGeometry;
+
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.Point;
 
 public class Display extends MasonGeometry implements Steppable {
 
@@ -35,7 +36,7 @@ public class Display extends MasonGeometry implements Steppable {
 	private boolean dynamic;
 	private boolean changeDestination = false;
 	private boolean dangerInfoSend = false;
-	private Geometry dangerArea;
+	private ArrayList<Geometry> dangerAreas = new ArrayList<Geometry>();
 
 	/**
 	 *  constructs the display
@@ -53,55 +54,59 @@ public class Display extends MasonGeometry implements Steppable {
 	 */
 	public void step(SimState state) {
 		agentlist.clear();
-		dangerIndex = dangerInObservedTiles();
-		if (dangerIndex >= 5 && dangerInfoSend == false) {
-			informDisplays(true);
-			dangerInfoSend = true;
-		}
-		if (dangerIndex <5 && dangerInfoSend == true){
-			informDisplays(false);
-			dangerInfoSend = false;
-		}
-		if (changeDestination){
-			changeDestination(state);
+		if (dynamic){
+			dangerIndex = dangerInObservedTiles();
+			if (dangerIndex >= 5 && dangerInfoSend == false) {
+				addAdditionalCosts(state);
+				informDisplays(state, true);
+				dangerInfoSend = true;
+			}
+			if (dangerIndex <5 && dangerInfoSend == true){
+				deleteAdditionalCosts(state);
+				informDisplays(state, false);
+				dangerInfoSend = false;
+			}
+			if (changeDestination){
+				changeDestinationForRandomAgents(state);
+			}
 		}
 	}
 
-	private void informDisplays(boolean b) {
+	private void informDisplays(SimState state, boolean b) {
 		if (displayList.contains(this)){
 			displayList.remove(this);
 		}
 		for (Display d : displayList){
 			d.setChangeDestination(b, this.geometry);
-			LOGGER.info("DANGER: {}",b);
-		}		
+//			LOGGER.info("DANGER: {}",b);
+		}
+		
 	}
-
-	private void changeDestination(SimState state) {
-		if (dynamic){
-			Tile newDest = null;
-			int length = Integer.MAX_VALUE;
-			for(Map.Entry<Tile, Path> entry : destinationList.entrySet()){
-				Tile key = entry.getKey();
-				Path val = entry.getValue();
-				ArrayList<Tile> pathAsTileList = setPathAsTileList(state, val);
-				for (Tile t : pathAsTileList){
-					if (dangerArea.isWithinDistance(t.getGeometry().getCentroid(), Room.TILESIZE)){
-						break;
-					}
-				}
-				if (val.getLength()< length){
-					length = val.getLength();
-					newDest = key;
-				}
-			}
-			if (newDest != null){
-				changeDestinationForRandomAgents(state, newDest);
+	private void deleteAdditionalCosts(SimState state){
+		for (Object o : observingTiles){
+			Tile t = (Tile)o;
+			if (t.isUsable()){
+				t.setAddCosts(0);
 			}
 		}
+		LOGGER.debug("AddCosts reset");
+	}
+	private void addAdditionalCosts(SimState state) {
+		for (Object o : observingTiles){
+			Tile t = (Tile)o;
+			if (t.isUsable() && t.getAddCosts()==0){
+				t.setAddCosts(100 * dangerIndex);
+			}
+		}
+		LOGGER.debug("AddCosts set");
 	}
 
-	private void changeDestinationForRandomAgents(SimState state, Tile newDest) {
+	private void changeDestinationForRandomAgents(SimState state) {
+		Tile newDest = setNewDestination(state);
+//		if (newDest != null && !(endTilesWithManipulatedCosts.contains(newDest)) ){
+//			addCheaperCostsForNewDestinationPath(state, newDest);
+//			endTilesWithManipulatedCosts.add(newDest);
+//		}
 		int percent = ((Room)state).possibility;
 		ArrayList<RoomAgent> tmpAgentlist = new ArrayList<RoomAgent>();
 		tmpAgentlist.addAll(agentlist);
@@ -112,12 +117,71 @@ public class Display extends MasonGeometry implements Steppable {
 		for (int i = 0; i < agentsRecognized; i++){
 			int index = state.random.nextInt(tmpAgentlist.size());
 			RoomAgent a = tmpAgentlist.get(index);
-			a.setDestTile(newDest);
+			if (newDest != null){
+				a.setDestTile(newDest);
+			}
+			a.setDisplayRecognized(true);
 			tmpAgentlist.remove(index);
 		}
-		LOGGER.info("Dangerindex geändert für {} Agenten", agentsRecognized);
+		
 	}
 
+	private Tile addCheaperCostsForNewDestinationPath(SimState state, Tile newDest){
+		//TODO: dafür sorgen, dass die nicht jeden step aufgerufen wird
+		Room room = (Room) state;
+		Point point = this.geometry.getCentroid();
+		Tile start = room.getTileByCoord(point.getX(), point.getY());
+		//fakeAgent
+		RoomAgent a = new RoomAgent(); 
+		Path p = room.calcNewPath(a, start, newDest);
+		if (p != null){
+			ArrayList<Tile> pathlist = setPathAsTileList(room, p);
+			for (Tile t : pathlist){
+				Bag neighbours = room.allTilesOfMap.getObjectsWithinDistance(t, Room.TILESIZE*2);
+				neighbours.removeAll(pathlist);
+				for (Object o : neighbours){
+					Tile ti = (Tile) o;
+					ti.setAddCosts(-150);
+				}
+				t.setAddCosts(-300);
+			}
+		}
+		return null;
+	}
+	private Tile setNewDestination(SimState state){
+		Tile newDest = null;
+		int length = Integer.MAX_VALUE;
+		for(Map.Entry<Tile, Path> entry : destinationList.entrySet()){
+			Tile key = entry.getKey();
+			Path val = entry.getValue();
+			ArrayList<Tile> pathAsTileList = setPathAsTileList(state, val);
+			boolean danger = false;
+			for (Tile t : pathAsTileList){
+				for (Geometry g : dangerAreas){
+					if (g.isWithinDistance(t.getGeometry().getCentroid(), Room.TILESIZE)){
+						danger =true;
+						break;
+					}	
+				}
+				
+			}
+			if (val.getLength()< length && danger == false){
+				length = val.getLength();
+				newDest = key;
+			}
+		}
+		return newDest;
+	}
+	private ArrayList<Tile> setPathAsTileList(SimState state, Path path){
+	    ArrayList<Tile> pathAsTileList = new ArrayList<Tile>(); //TODO: evtl .clear() machen, wenn ram voll läuft
+	    for (int i=0; i< path.getLength();i++){
+	    	Step step = path.getStep(i);
+	    	Tile t = ((Room)state).getTile(step.getX(), step.getY());
+	    	pathAsTileList.add(i, t);
+		}
+	    return pathAsTileList;
+	}
+	
 	/**
 	 * @return the danger index for the observed polygon
 	 */
@@ -151,15 +215,6 @@ public class Display extends MasonGeometry implements Steppable {
 		return 0;
 	}
 
-	private ArrayList<Tile> setPathAsTileList(SimState state, Path path){
-	    ArrayList<Tile> pathAsTileList = new ArrayList<Tile>(); //TODO: evtl .clear() machen, wenn ram voll läuft
-	    for (int i=0; i< path.getLength();i++){
-	    	Step step = path.getStep(i);
-	    	Tile t = ((Room)state).getTile(step.getX(), step.getY());
-	    	pathAsTileList.add(i, t);
-		}
-	    return pathAsTileList;
-	}
 	/**
 	 * @return the displayList
 	 */
@@ -193,9 +248,9 @@ public class Display extends MasonGeometry implements Steppable {
 	 * @param changeDestination the changeDestination to set
 	 */
 	public synchronized void setChangeDestination(boolean changeDestination, Geometry g) {
-		dangerArea = g;
+		dangerAreas.add(g);
 		this.changeDestination = changeDestination;
-		LOGGER.info("DANGER ERHALTEN");
+//		LOGGER.info("DANGER ERHALTEN");
 	}
 
 }

@@ -89,7 +89,7 @@ public class RoomMap implements TileBasedMap{
 				Coordinate[] points = {p1, p2, p3, p4, p1};
 				LinearRing lr = new GeometryFactory().createLinearRing(points);
 				Polygon poly = new GeometryFactory().createPolygon(lr);
-				Tile tile = new Tile(i,j);
+				Tile tile = new Tile(i,j, 0);
 				tile.setPolygon(poly);
 				Bag obstacles = room.obstacles.getObjectsWithinDistance(poly.getCentroid(), Room.TILESIZE);
 				Bag inMovingSpace = room.movingSpace.getObjectsWithinDistance(poly.getCentroid(), Room.TILESIZE);
@@ -122,7 +122,7 @@ public class RoomMap implements TileBasedMap{
 				max);
 		int x = 0;
 		//erzeuge fake agent fuer die Routenberechnung
-		RoomAgent a = new RoomAgent(fakeAgentID, 1, Integer.MAX_VALUE, Integer.MAX_VALUE, new Tile(0, 0), new Results(room.numAgents, stadium)); //fakeAgent
+		RoomAgent a = new RoomAgent(fakeAgentID, 1, Integer.MAX_VALUE, Integer.MAX_VALUE, new Tile(0, 0, 0), new Results(room.numAgents, stadium)); //fakeAgent
 		//gehe alle tiles der map durch
 		for (int tx=0;tx< width; tx++){
 			for (int ty=0;ty<height; ty++){
@@ -237,9 +237,9 @@ public class RoomMap implements TileBasedMap{
 		if (room.getAllDestinationCenterTiles().contains(t) && t.isUsable()){
 			return false;
 		}
-		if (room.movingSpace.isCovered(coord) && t.getPotentialAgentsList().isEmpty() && t.isUsable()){
+		if (room.movingSpace.isCovered(coord) && t.getPotentialAgentsList().isEmpty() && t.isUsable() && t.getAddCosts() == 0){
 			return false;
-		} 
+		}
 		return true;
 	}
 

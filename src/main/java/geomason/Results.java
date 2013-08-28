@@ -34,7 +34,7 @@ public class Results implements Steppable{
 	public void step(SimState state) {
 		schedule = state.schedule;
 		String steps = String.valueOf(schedule.getSteps());
-		if (schedule.getSteps()%100 == 0){
+		if (schedule.getSteps()%100 == 0 || (numAgents < 10 && numAgents > 0)){
 			LOGGER.info("Instance:{}, STEP:{}, AGENTEN GERETTET:{}, AGENTEN TOT:{}",
 					Long.toString(state.seed()),
 					steps,

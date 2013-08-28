@@ -26,7 +26,7 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
 
-public class RoomAgent extends MasonGeometry implements Steppable, Mover{
+public class RoomAgent extends MasonGeometry implements Steppable, Mover{ 
 	
 	private final static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(RoomAgent.class);
 
@@ -42,7 +42,7 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     private PointMoveTo pointMoveTo = new PointMoveTo();
     private int id;
     private Stoppable stoppMe;
-    private int destinationChanger;
+    private int patienceCounter;
     private int maxMoveRate;
     private Tile destTile;
     private Results result;
@@ -50,8 +50,11 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 	private boolean end = false;
 	private ArrayList<java.awt.Point> trace = new ArrayList<java.awt.Point>();
 	private Tile actualTile;
-	private boolean destchanger;
+	private boolean hasToWait;
 	private boolean deadlock;
+	private boolean displayRecognized;
+
+	private int deadlockCounter = 0;
 
 	
     
@@ -73,21 +76,24 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
        	this.destTile = destinationTile;
        	this.result = result;
     }
-		
+	
+    public RoomAgent(){
+    	//fakeagent
+    }
     /* (non-Javadoc)
      * @see sim.engine.Steppable#step(sim.engine.SimState)
      */
     public void step(SimState state){
 		roomState = (Room)state;
 		deadlock = checkForDeadLock();
-    	destchanger = false;
+    	hasToWait = false;
     	for (int movestep=0; movestep<moveRate; movestep++){   		
     		moveAgent(roomState);
     		if (deadlock && moveRate%2 == 0){
     			return;
     		}
-    		deadlock  =false;
-    		if (end || destchanger) return;
+    		deadlock = false;
+    		if (end || hasToWait) return;
     	}
     }
     
@@ -95,7 +101,9 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
      * @param state the {@link SimState} where this object is initialized
      */
     private void moveAgent(SimState state){
+    	// hole den aktuellen Standort
     	actualTile = getActualTile(roomState);
+    	//wenn in einer der Zielzonen = In Sicherheit -> aus simulation entfernen
     	if (isTargetReached(actualTile)){
     		if (stoppMe == null){
     			throw new RuntimeException("Stoppable nicht gesetzt");
@@ -104,28 +112,30 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     		end = true;
     		return;
     	}
-    	
-    	if (destinationChanger == maxPatience || deadlock ){
-    		Bag allDestTiles = roomState.getAllDestinationCenterTiles();
-    		Tile randomTile = (Tile) allDestTiles.get(roomState.random.nextInt(allDestTiles.size()));
-    		while (randomTile.equals(destTile) && roomState.getAllDestinationCenterTiles().size() > 1){
-    			randomTile = (Tile) allDestTiles.get(roomState.random.nextInt(allDestTiles.size()));
-    		}
-    		setDestTile(randomTile);
-    		destinationChanger = 0;
-    		if (deadlock){
-    			trace.clear();
-    		}
+    	//wenn mehr als 30 Schritte lang kein Fortschritt, dann maxPatience erreicht 
+    	if (deadlockCounter >= 3){
+    		patienceCounter = maxPatience;
     	}
-
+    	// wenn maxPatience erreicht ist, dann wechsle Ziel
+    	if (patienceCounter == maxPatience && actualTile.getDestinations().get(destTile)> 30){
+    		randomlyChangeDestination();
+    		patienceCounter = 0;
+    		deadlockCounter = 0;
+    	}
+    	//wenn der agent sich nicht wirklich fortbewegt hat, dann zaehle wie oft das vorkommt
+    	if (deadlock){
+    		deadlockCounter ++;
+    		//randomlyChangeDestination();
+			trace.clear();
+		}
     	Tile nextTile = getTileToMoveTo(actualTile, state);
     	if (nextTile == null){
-    		destinationChanger++;
-    		destchanger = true;
+    		patienceCounter++;
+    		hasToWait = true;
     		return;
     	}
     	if (nextTile != null){
-    		destinationChanger = 0;
+    		patienceCounter = 0;
     		nextTile.addToPotentialList(this);
     		actualTile.removeFromPotentialList(this); 
     		java.awt.Point actPoint = new java.awt.Point(actualTile.getX(), actualTile.getY());
@@ -137,6 +147,15 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     		moveTo(coord);
     	}
     }
+
+	private void randomlyChangeDestination() {
+		Bag allDestTiles = roomState.getAllDestinationCenterTiles();
+		Tile randomTile = (Tile) allDestTiles.get(roomState.random.nextInt(allDestTiles.size()));
+		while (randomTile.equals(destTile) && roomState.getAllDestinationCenterTiles().size() > 1){
+			randomTile = (Tile) allDestTiles.get(roomState.random.nextInt(allDestTiles.size()));
+		}
+		setDestTile(randomTile);
+	}
 
 	/**
 	 * @return the trace as readable {@link String}
@@ -179,7 +198,11 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     		if (tile.isUsable() && tile.getPotentialAgentsList().isEmpty()){
     			int length = tile.getDestinations().get(destTile);
     			if (length != Integer.MAX_VALUE){
-    				length = length + getCostsForTarget(tile, state);
+        			if (displayRecognized){
+        				length = length + getCostsForTarget(tile, state) + tile.getAddCosts();
+        			} else {
+        				length = length + getCostsForTarget(tile, state);
+        			}
     				hmapWithTiles.put(tile, length);    				
     			}
     		}
@@ -219,8 +242,8 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     		if (tile.isUsable()){
     			int length = tile.getDestinations().get(destTile);
         		if (length != Integer.MAX_VALUE){
-        				length = length + getCostsForTarget(tile, state);
-        				hmapWithTiles.put(tile, length);
+        			length = length + getCostsForTarget(tile, state);
+        			hmapWithTiles.put(tile, length);
         		}
     		}
     		
@@ -359,6 +382,9 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     	if (equals || compareValues){
     		targetReached = true;
     	}
+    	if (roomState.getAllTilesOfDestinations().contains(actTile)){
+    		targetReached = true;
+    	}
     	return targetReached;
 	}
   
@@ -438,5 +464,33 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 	public void setMoveRate(int moveRate) {
 		this.moveRate = moveRate;
 	}
-	
+
+	/**
+	 * @return the displayRecognized
+	 */
+	public boolean isDisplayRecognized() {
+		return displayRecognized;
+	}
+
+	/**
+	 * @param displayRecognized the displayRecognized to set
+	 */
+	public void setDisplayRecognized(boolean displayRecognized) {
+		this.displayRecognized = displayRecognized;
+	}
+
+	/**
+	 * @return the patienceCounter
+	 */
+	public int getPatienceCounter() {
+		return patienceCounter;
+	}
+
+	/**
+	 * @return the deadlock
+	 */
+	public boolean isDeadlock() {
+		return deadlock;
+	}
+	    
 }

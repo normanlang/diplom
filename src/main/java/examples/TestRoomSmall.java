@@ -36,9 +36,9 @@ public class TestRoomSmall implements RoomInterface{
     
 	private void loadData(){
         // url für die vektordaten der Zonen und des Bewegungsraums
-		URL testRoomBoundaries = Room.class.getResource("data/bewegungsraum.shp");
-		URL obstacleBoundaries = Room.class.getResource("data/hindernisseklein.shp");
-		URL displaysBoundaries = Room.class.getResource("data/displays.shp");
+		URL testRoomBoundaries = Room.class.getResource("data/testsmall/bewegungsraum.shp");
+		URL obstacleBoundaries = Room.class.getResource("data/testsmall/hindernisseklein.shp");
+		URL displaysBoundaries = Room.class.getResource("data/testsmall/displays.shp");
         Bag movingSpaceAttributes = new Bag();
         movingSpaceAttributes.add("Art");     
         Bag displayAttributes = new Bag();
@@ -71,10 +71,10 @@ public class TestRoomSmall implements RoomInterface{
 		while (!allMGBs.isEmpty()){
 			MasonGeometryBlock mgb = (MasonGeometryBlock) allMGBs.pop();
 			String name =  mgb.getStringAttribute("Art");
-			if (name.equalsIgnoreCase("ziel1") || name.equalsIgnoreCase("ziel2") || name.equalsIgnoreCase("ziel3")) {
+			if (name.equalsIgnoreCase("ziel")) {
 				destinations.addGeometry(mgb);
 			}
-			if (name.equalsIgnoreCase("start")) {
+			if (name.equalsIgnoreCase("start1") || name.equalsIgnoreCase("start2")) {
 				starts.addGeometry(mgb);
 			}
 		}

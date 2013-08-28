@@ -1,6 +1,5 @@
 package geomason;
 
-import static geomason.RoomAgent.fakeAgentID;
 import static geomason.RoomMap.STATIC_MAP_TILES_CSV;
 import examples.Preussenstadion;
 import examples.TestRoom;
@@ -67,9 +66,9 @@ public class Room extends SimState{
 
 			super(seed); 
 			// HIER EINSTELLUNGEN FUER DIE SIMULATION VORNEHMEN!!!!
-			setStadium(stadium.TESTSMALL);
+			setStadium(Stadium.TESTSMALL);
 			dynamic = true;  //dynamisch vs. statisch
-			possibility = 50; // Wahrscheinlichkeit, wieviele Agenten die Änderung des Displays mitbekommen 10, 25, 50
+			possibility = 10; // Wahrscheinlichkeit, wieviele Agenten die Änderung des Displays mitbekommen 10, 25, 50
 			// -----------------------------------
 			LOGGER.info("dynamische Displays? {}, Wahrscheinlichkeit: {}", dynamic, possibility);
 			LOGGER.info("Daten erfolgreich geladen");
@@ -435,15 +434,15 @@ public class Room extends SimState{
 				Bag tilesOfMg = new Bag();
 				for (Object o : DisplayBag){
 		    		Tile t = (Tile) o;
-		    		boolean empty = g.isWithinDistance(t.getGeometry().getCentroid(), TILESIZE);
-		    		if (!empty){
+		    		boolean tileIsInGeometry = g.isWithinDistance(t.getGeometry().getCentroid(), TILESIZE);
+		    		if (tileIsInGeometry){
 		    			tilesOfMg.add(t);
 		    			DisplayBag.remove(t);
 		    		}
 		    	}
 				// ermittle alle wege zu den zielen
 				HashMap<Tile, Integer> dests = centerTile.getDestinations();
-				RoomAgent a = new RoomAgent(fakeAgentID, 1, Integer.MAX_VALUE, Integer.MAX_VALUE, new Tile(0, 0), new Results(numAgents, stadium)); //fakeAgent
+				RoomAgent a = new RoomAgent();
 				for (Map.Entry<Tile, Integer> entry : dests.entrySet()){
 					Tile key = entry.getKey();
 					Path p = calcNewPath(a, centerTile, key);
@@ -452,8 +451,12 @@ public class Room extends SimState{
 					}
 				}
 				Display d = new Display(tilesOfMg, dynamic, destList);
-	    		displList.add(d);
+				MasonGeometry mg = ((MasonGeometry) object);
+				if (mg.hasAttribute("DisplayID")){
+					d.addIntegerAttribute("DisplayID", mg.getIntegerAttribute("DisplayID"));
+				}
 	    		d.geometry = g;
+	    		displList.add(d);
 	    		Stoppable stoppable = schedule.scheduleRepeating(d);
                 d.setStoppMe(stoppable);
 			}
@@ -499,6 +502,30 @@ public class Room extends SimState{
 		 */
 		public int getMaxMoveRate() {
 			return maxMoveRate;
+		}
+		/**
+		 * @return the dynamic
+		 */
+		public boolean isDynamic() {
+			return dynamic;
+		}
+		/**
+		 * @param dynamic the dynamic to set
+		 */
+		public void setDynamic(boolean dynamic) {
+			this.dynamic = dynamic;
+		}
+		/**
+		 * @return the possibility
+		 */
+		public int getPossibility() {
+			return possibility;
+		}
+		/**
+		 * @param possibility the possibility to set
+		 */
+		public void setPossibility(int possibility) {
+			this.possibility = possibility;
 		}
 
 }
