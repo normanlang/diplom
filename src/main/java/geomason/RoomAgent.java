@@ -117,7 +117,7 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     		patienceCounter = maxPatience;
     	}
     	// wenn maxPatience erreicht ist, dann wechsle Ziel
-    	if (patienceCounter == maxPatience && actualTile.getDestinations().get(destTile)> 30){
+    	if (patienceCounter == maxPatience){
     		randomlyChangeDestination();
     		patienceCounter = 0;
     		deadlockCounter = 0;
