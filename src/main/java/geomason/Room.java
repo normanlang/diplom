@@ -66,9 +66,9 @@ public class Room extends SimState{
 
 			super(seed); 
 			// HIER EINSTELLUNGEN FUER DIE SIMULATION VORNEHMEN!!!!
-			setStadium(Stadium.PREUSSEN);
+			setStadium(Stadium.TESTSMALL);
 			dynamic = true;  //dynamisch vs. statisch
-			possibility = 10; // Wahrscheinlichkeit, wieviele Agenten die Änderung des Displays mitbekommen 10, 25, 50
+			possibility = 50; // Wahrscheinlichkeit, wieviele Agenten die Änderung des Displays mitbekommen 10, 25, 50
 			// -----------------------------------
 			LOGGER.info("dynamische Displays? {}, Wahrscheinlichkeit: {}", dynamic, possibility);
 			LOGGER.info("Daten erfolgreich geladen");

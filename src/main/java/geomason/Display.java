@@ -98,15 +98,24 @@ public class Display extends MasonGeometry implements Steppable {
 		}
 	}
 
+	/**
+	 * searches for a new destination which is not in a danger area.
+	 * if it finds more than one, the tile with the shortest path is 
+	 * chosen. Only if a new destination is found it changes the destination 
+	 * for a certain amount of agents in the observed area. 
+	 * the model {@link Room} defines how high
+	 * the percentage of agents is, who "see" this display.
+	 * These agents choose the new destination
+	 *  
+	 * @param state the {@link SimState} of this Display
+	 */
 	private void changeDestinationForRandomAgents(SimState state) {
+		//finde ein neues ziel, was nicht durch eine gefahrenzone fuehrt
 		Tile newDest = setNewDestination(state);
-//		if (newDest != null && !(endTilesWithManipulatedCosts.contains(newDest)) ){
-//			addCheaperCostsForNewDestinationPath(state, newDest);
-//			endTilesWithManipulatedCosts.add(newDest);
-//		}
 		int percent = ((Room)state).possibility;
 		ArrayList<RoomAgent> tmpAgentlist = new ArrayList<RoomAgent>();
 		tmpAgentlist.addAll(agentlist);
+		//berechne wieviele agenten ihr ziel wechseln
 		BigDecimal tmp = BigDecimal.valueOf(agentlist.size());
 		tmp = tmp.multiply(BigDecimal.valueOf(percent));
 		tmp = tmp.divide(new BigDecimal("100"), RoundingMode.HALF_UP);
@@ -124,7 +133,6 @@ public class Display extends MasonGeometry implements Steppable {
 	}
 
 	private Tile addCheaperCostsForNewDestinationPath(SimState state, Tile newDest){
-		//TODO: dafür sorgen, dass die nicht jeden step aufgerufen wird
 		Room room = (Room) state;
 		Point point = this.geometry.getCentroid();
 		Tile start = room.getTileByCoord(point.getX(), point.getY());
@@ -180,30 +188,36 @@ public class Display extends MasonGeometry implements Steppable {
 	}
 	
 	/**
+	 * calculates the overall danger in the observed area
 	 * @return the danger index for the observed polygon
 	 */
 	private int dangerInObservedTiles() {
-
+		//zaehle agenten
 		for (Object o : observingTiles) {
 			Tile t = (Tile) o;
 			if (!(t.getPotentialAgentsList().isEmpty())) {
 				agentlist.add(t.getPotentialAgentsList().get(0));
 			}
 		}
+		//berechne flaeche
 		double area = this.getGeometry().getArea();
 		if (area == 0) {
 			return 0;
 		}
+		//berechne agentendichte
 		BigDecimal tmp = BigDecimal.valueOf(agentlist.size());
 		tmp = tmp.divide(BigDecimal.valueOf(area), 2, RoundingMode.HALF_UP);
 		int dangerFromAgents = 0;
+		// es wird immer aufgerundet -> 3,1 wird zu 4
 		int roundTmp = tmp.setScale(0, RoundingMode.CEILING).intValue();
 		if (tmp.compareTo(BigDecimal.valueOf(3)) > 0) {
-
+			//wenn die agentendichte > 3 dann setze den gefahrenwert auf 5
 			dangerFromAgents = 1 + roundTmp;
 		} else
 			dangerFromAgents = roundTmp;
+		//berechne Gefahr von anderen Sensoren -> derzeit nicht implementiert
 		int dangerFromEnvironment = calcDangerFromEnvironment();
+		//nehme das Maximum aller Gefahrenwerte als Gesamtgefahrenwert
 		return Math.max(dangerFromAgents, dangerFromEnvironment);
 	}
 

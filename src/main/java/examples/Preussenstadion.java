@@ -18,7 +18,7 @@ import com.vividsolutions.jts.geom.Envelope;
 public class Preussenstadion implements RoomInterface{
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(Preussenstadion.class);
-    public final int NUM_AGENTS = 12500;
+    public final int NUM_AGENTS = 500;
     private int maxMoveRate = 5; //in Tiles 
     private int maxPatience = 15;
     private GeomVectorField movingSpace, obstacles, destinations, starts, displays;

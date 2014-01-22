@@ -98,6 +98,10 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     }
     
     /**
+     * moves the agent to the next tile which has the lowest costs,
+     * is usable and free. If it is not, than
+     * a counter is counted up. If this counter exceeds the value of
+     * the maximum patience than the agent changes his destination
      * @param state the {@link SimState} where this object is initialized
      */
     private void moveAgent(SimState state){
@@ -128,12 +132,14 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     		//randomlyChangeDestination();
 			trace.clear();
 		}
+    	//berechen kostenguenstigstes tile
     	Tile nextTile = getTileToMoveTo(actualTile, state);
     	if (nextTile == null){
     		patienceCounter++;
     		hasToWait = true;
     		return;
     	}
+    	//bewege agenten
     	if (nextTile != null){
     		patienceCounter = 0;
     		nextTile.addToPotentialList(this);
