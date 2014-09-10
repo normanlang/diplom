@@ -1,10 +1,20 @@
 package geomason;
 
+/**
+ * @author Norman Langner
+ * This class represents the additional costs for each tile which form the dynamic floor field
+ */
 public class CostTile {
 
 	private int x,y;
 	private int costs = 1;
 	
+	/**
+	 * The constructor sets the position of the CostTile and its initial costs
+	 * @param x
+	 * @param y
+	 * @param costs
+	 */
 	public CostTile(int x, int y, int costs){
 		this.x = x;
 		this.y = y;

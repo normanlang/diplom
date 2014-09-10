@@ -18,13 +18,21 @@ import com.vividsolutions.jts.geom.Envelope;
 public class Preussenstadion implements RoomInterface{
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(Preussenstadion.class);
-    public final int NUM_AGENTS = 500;
+	/**
+     * the number of agents, who are in the simulation 
+     */
+    public final int NUM_AGENTS = 500; //numbers of agents
     private int maxMoveRate = 5; //in Tiles 
-    private int maxPatience = 15;
+    private int maxPatience = 15; //in steps
     private GeomVectorField movingSpace, obstacles, destinations, starts, displays;
     Envelope MBR;
     private int width, height;
     
+    /**
+     * Constructor for the stadium of Preussen Muenster. Loads the georeferenced informations and builds objects from it
+     * @param w the screen width
+     * @param h the screen height
+     */
     public Preussenstadion(int w, int h){
     	width = w;
     	height = h;
@@ -77,6 +85,11 @@ public class Preussenstadion implements RoomInterface{
 		destinations.computeConvexHull();
 		
 	}
+	/**
+	 * as described in my diplom thesis I ignore the guest-area of the stadium
+	 * @param s
+	 * @param d
+	 */
 	private void removeGaeste(GeomVectorField s, GeomVectorField d) {
 		Bag tmp = s.getGeometries();
 		Bag tmpz = d.getGeometries();
@@ -101,55 +114,60 @@ public class Preussenstadion implements RoomInterface{
 		
 	}
 
-	/**
-	 * @return the nUM_AGENTS
+	
+	/* (non-Javadoc)
+	 * @see examples.RoomInterface#getNUM_AGENTS()
 	 */
 	public int getNUM_AGENTS() {
 		return NUM_AGENTS;
 	}
 
-	/**
-	 * @return the movingSpace
+	/* (non-Javadoc)
+	 * @see examples.RoomInterface#getMovingSpace()
 	 */
 	public GeomVectorField getMovingSpace() {
 		return movingSpace;
 	}
 
-	/**
-	 * @return the obstacles
+	/* (non-Javadoc)
+	 * @see examples.RoomInterface#getObstacles()
 	 */
 	public GeomVectorField getObstacles() {
 		return obstacles;
 	}
 
-	/**
-	 * @return the destinations
+	/* (non-Javadoc)
+	 * @see examples.RoomInterface#getDestinations()
 	 */
 	public GeomVectorField getDestinations() {
 		return destinations;
 	}
 
-	/**
-	 * @return the starts
+	/* (non-Javadoc)
+	 * @see examples.RoomInterface#getStarts()
 	 */
 	public GeomVectorField getStarts() {
 		return starts;
 	}
 
-	/**
-	 * @return the maxMoveRate
+	
+	/* (non-Javadoc)
+	 * @see examples.RoomInterface#getMaxMoveRateInTiles()
 	 */
 	public int getMaxMoveRateInTiles() {
 		return maxMoveRate;
 	}
 
-	/**
-	 * @return the maxPatience
+	/* (non-Javadoc)
+	 * @see examples.RoomInterface#getMaxPatience()
 	 */
 	public int getMaxPatience() {
 		return maxPatience;
 	}
 
+	/* (non-Javadoc)
+	 * @see examples.RoomInterface#getDisplays()
+	 */
 	public GeomVectorField getDisplays() {
 		
 		return displays;

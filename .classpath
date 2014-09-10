@@ -32,7 +32,15 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/home/slayer/git/gitWorkspace/libs/geomason.1.5.jar"/>
-	<classpathentry kind="lib" path="/home/slayer/git/gitWorkspace/libs/mason.16.jar"/>
+	<classpathentry kind="lib" path="/home/slayer/git/gitWorkspace/libs/geomason.1.5.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="http://cs.gmu.edu/~eclab/projects/mason/extensions/geomason/classdocs/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/home/slayer/git/gitWorkspace/libs/mason.16.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="http://cs.gmu.edu/~eclab/projects/mason/docs/classdocs/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

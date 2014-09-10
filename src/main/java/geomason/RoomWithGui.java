@@ -15,7 +15,11 @@ import sim.engine.SimState;
 import sim.portrayal.geo.GeomPortrayal;
 import sim.portrayal.geo.GeomVectorFieldPortrayal;
 import sim.util.gui.SimpleColorMap;
-
+/**
+ * @author Norman Langner
+ * This class draws the simulation in 2 frames, the simulation-frame and 
+ * the control-frame. See Mason-manual for more informations
+ */
 public class RoomWithGui extends GUIState{
 
     Display2D display;
@@ -26,16 +30,27 @@ public class RoomWithGui extends GUIState{
     GeomVectorFieldPortrayal displayPortrayal = new GeomVectorFieldPortrayal();
     GeomVectorFieldPortrayal tilePortrayal = new GeomVectorFieldPortrayal();
     
+    /**
+     * The logger for the simulation
+     */
     public static final Logger LOGGER = LoggerFactory.getLogger(RoomWithGui.class);
-
+    /**
+     * Constructor
+     * @param state
+     */
     public RoomWithGui(SimState state) {
 		super(state);
 	}
-
+    /**
+	 * Constructor, which sets up a {@link Room} as simulation
+	 */
 	public RoomWithGui() {
 		super(new Room(System.currentTimeMillis()));
 	}
 	
+    /* (non-Javadoc)
+     * @see sim.display.GUIState#init(sim.display.Controller)
+     */
     @Override
     public void init(Controller controller){
         super.init(controller);
@@ -49,7 +64,10 @@ public class RoomWithGui extends GUIState{
         controller.registerFrame(displayFrame);
         displayFrame.setVisible(true);
     }
-
+    
+    /**
+     * Sets up the different {@link Portrayal}. Every layer has its own portrayal.
+     */
     private void setupPortrayals(){
         Room roomState = (Room) state;
         agentPortrayal.setField(Room.agents);
@@ -72,6 +90,9 @@ public class RoomWithGui extends GUIState{
     }
 
 
+    /* (non-Javadoc)
+     * @see sim.display.GUIState#quit()
+     */
     @Override
     public void quit(){
         super.quit();
@@ -82,22 +103,35 @@ public class RoomWithGui extends GUIState{
         display = null;
     }
 
+    /* (non-Javadoc)
+     * @see sim.display.GUIState#start()
+     */
     @Override
     public void start(){
         super.start();
         setupPortrayals();
     }
-
+    
+    /**
+     * Main program
+     * @param args
+     */
     public static void main(String[] args){
         RoomWithGui roomGUI = new RoomWithGui();
         Console console = new Console(roomGUI);
         console.setVisible(true);
     }
 
-
+    /**
+     * The name, which is shown at the gui-window
+     * @return
+     */
     public static String getName(){ 
     	return "Testraum"; 
     }
+    /* (non-Javadoc)
+     * @see sim.display.GUIState#getSimulationInspectedObject()
+     */
     @Override
     public Object getSimulationInspectedObject(){ 
     	return state; 

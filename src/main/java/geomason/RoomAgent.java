@@ -26,6 +26,10 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
 
+/**
+ * @author Norman Langner
+ *
+ */
 public class RoomAgent extends MasonGeometry implements Steppable, Mover{ 
 	
 	private final static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(RoomAgent.class);
@@ -60,7 +64,7 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     
     /**
      * 
-     * constructs a RommAgent
+     * Constructs a RoomAgent. 
      * @param id the id of RoomAgent 
      * @param moveRate the moveRate in tiles
      * @param maxMoveRate the maxMoveRate for this RoomAgent, defined by {@link Room} in tiles
@@ -98,16 +102,17 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     }
     
     /**
-     * moves the agent to the next tile which has the lowest costs,
+     * Moves the agent to the next tile which has the lowest costs,
      * is usable and free. If it is not, than
      * a counter is counted up. If this counter exceeds the value of
      * the maximum patience than the agent changes his destination
      * @param state the {@link SimState} where this object is initialized
      */
     private void moveAgent(SimState state){
-    	// hole den aktuellen Standort
+    	// get the actual position
     	actualTile = getActualTile(roomState);
-    	//wenn in einer der Zielzonen = In Sicherheit -> aus simulation entfernen
+    	//if an agent is one of the destination areas, that means 
+    	//he is safe and can be removed from the simulation
     	if (isTargetReached(actualTile)){
     		if (stoppMe == null){
     			throw new RuntimeException("Stoppable nicht gesetzt");
@@ -116,30 +121,30 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
     		end = true;
     		return;
     	}
-    	//wenn mehr als 30 Schritte lang kein Fortschritt, dann maxPatience erreicht 
+    	//if more than 30 steps no progress is made, maxPatience is reached 
     	if (deadlockCounter >= 3){
     		patienceCounter = maxPatience;
     	}
-    	// wenn maxPatience erreicht ist, dann wechsle Ziel
+    	// if maxPatience is reached change the destination
     	if (patienceCounter == maxPatience){
     		randomlyChangeDestination();
     		patienceCounter = 0;
     		deadlockCounter = 0;
     	}
-    	//wenn der agent sich nicht wirklich fortbewegt hat, dann zaehle wie oft das vorkommt
+    	//if the agent makes no real progress, count how often that happens
     	if (deadlock){
     		deadlockCounter ++;
     		//randomlyChangeDestination();
 			trace.clear();
 		}
-    	//berechen kostenguenstigstes tile
+    	//calculate the tile with the least costs
     	Tile nextTile = getTileToMoveTo(actualTile, state);
     	if (nextTile == null){
     		patienceCounter++;
     		hasToWait = true;
     		return;
     	}
-    	//bewege agenten
+    	//move agent
     	if (nextTile != null){
     		patienceCounter = 0;
     		nextTile.addToPotentialList(this);
@@ -346,7 +351,7 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 	}
     
 	/**
-	 * get all agents which a in a radius of maxMoveDistance
+	 * get all agents which are in a radius of maxMoveDistance
 	 * @param actTile the actual postion as tile
 	 * @return {@link Bag} 
 	 */
@@ -356,7 +361,7 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 	}
 
 
-    // bewegt den Agenten zu den gegebenen Koordinaten
+    // move agent to a certain coordinate
     private void moveTo(Coordinate c)
     {
         pointMoveTo.setCoordinate(c);
@@ -371,6 +376,11 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 		return t;
 	}
     
+	/**
+	 * Returns the actual position of the {@link RoomAgent} as a {@link Tile}
+	 * @param state the {@link SimState} the agent is in 
+	 * @return the position of this {@link RoomAgent} as a {@link Tile}
+	 */
 	public Tile getPositionAsTile(SimState state){
 		if (actualTile==null){
 			actualTile = getActualTile(state);
@@ -395,55 +405,79 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 	}
   
 	
+    /**
+     * Sets the position of the agent in the simulation
+     * @param p the position of the agent in the simulation
+     */
     public void setLocation(Point p){ 
     	location = p; 
     	this.geometry = p;
     }
 
+    /* (non-Javadoc)
+     * @see sim.util.geo.MasonGeometry#getGeometry()
+     */
     public Geometry getGeometry(){ 
     	return location;
     }
     
     
 
+	/* (non-Javadoc)
+	 * @see sim.util.geo.MasonGeometry#toString()
+	 */
 	@Override
 	public String toString() {
 		return String.format("RoomAgent [location=%s, moveRate=%s, id=%s]",
 				location, moveRate, id);
 	}
 
+	/**
+	 * Returns the id of an agent. This is for example needed to get which agent died.
+	 * @return the id of the agent
+	 */
 	public int getId() {
 		return id;
 	}
 	
 	
+	/**
+	 * This method is for the observer to stop those agents which have reached their destinations or
+	 * are dead to get them removed from the simulation. If that is not done, the simulations runs 
+	 * forever.
+	 */
 	public void stopMeNow(){
 		result.reduceAgents();
 		actualTile.removeFromPotentialList(this);
 		stoppMe.stop();
 	}
 	/**
-	 * @param stoppMe the stoppMe to set
+	 * Sets the {@link Stoppable} for this agent, which allows to stop the agent and get him removed 
+	 * from the simulation.
+	 * @param stoppMe the {@link Stoppable} to set
 	 */
 	public void setStoppMe(Stoppable stoppMe) {
 		this.stoppMe = stoppMe;
 	}
 
 	/**
-	 * @return the maxMoveRate
+	 * Returns the max move rate in tiles per step of this agent
+	 * @return the max move rate
 	 */
 	public int getMaxMoveRate() {
 		return maxMoveRate;
 	}
 
 	/**
-	 * @param maxMoveRate the maxMoveRate to set
+	 * Sets the max move rate in tiles per step of this agent. 
+	 * @param maxMoveRate the max move rate 
 	 */
 	public void setMaxMoveRate(int maxMoveRate) {
 		this.maxMoveRate = maxMoveRate;
 	}
 
 	/**
+	 * Returns the destination {@link Tile} of this agent.
 	 * @return the destTile
 	 */
 	public Tile getDestTile() {
@@ -451,6 +485,7 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 	}
 
 	/**
+	 * Sets the destination {@link Tile} of this agent
 	 * @param destTile the destTile to set
 	 */
 	public void setDestTile(Tile destTile) {
@@ -458,6 +493,7 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 	}
 
 	/**
+	 * Returns the actual move rate of this agent
 	 * @return the moveRate
 	 */
 	public int getMoveRate() {
@@ -465,6 +501,7 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 	}
 
 	/**
+	 * Sets the move rate of this agent. Usually between 1-5
 	 * @param moveRate the moveRate to set
 	 */
 	public void setMoveRate(int moveRate) {
@@ -472,6 +509,7 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 	}
 
 	/**
+	 * Returns if a display is recognized by this agent
 	 * @return the displayRecognized
 	 */
 	public boolean isDisplayRecognized() {
@@ -479,6 +517,7 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 	}
 
 	/**
+	 * Sets if a display was recognized by this agent
 	 * @param displayRecognized the displayRecognized to set
 	 */
 	public void setDisplayRecognized(boolean displayRecognized) {
@@ -486,6 +525,7 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 	}
 
 	/**
+	 * Returns the patience counter
 	 * @return the patienceCounter
 	 */
 	public int getPatienceCounter() {
@@ -493,6 +533,7 @@ public class RoomAgent extends MasonGeometry implements Steppable, Mover{
 	}
 
 	/**
+	 * Returns if the agent is in a deadlock
 	 * @return the deadlock
 	 */
 	public boolean isDeadlock() {

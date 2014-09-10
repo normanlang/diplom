@@ -33,22 +33,82 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 
 
+/**
+ * @author Norman Langner
+ * 
+ * Room extends Masons {@link SimState}. 
+ *
+ */
 public class Room extends SimState{
 
+		
 		private static final long serialVersionUID = -1430063512195387977L;
 		private static final Logger LOGGER = LoggerFactory.getLogger(Room.class);
+		
+		/**
+		 * Value which represents the cost of an agent -> see Gibbs-Markjos-model
+		 */
 		public static final int OWNCOST = 1000;
+		
+		/**
+		 * General size of all tiles in the simulation. 0.5 is chosen from  Gibbs-Markjos-model. More reasons
+		 * can be found in my diplom-thesis
+		 */
 		public static final double TILESIZE = 0.5;
-		public static final int WIDTH = 800; 
+		
+		/**
+		 * Represents the screen width
+		 */
+		public static final int WIDTH = 800;
+		
+		/**
+		 * Represents the screen height
+		 */
 		public static final int HEIGHT = 600;
+		
+		/**
+		 * Value between 0 and 100. Represents how likely agents will see a display-change
+		 */
 		public int possibility; 
+		
+	    /**
+	     * number of simulated agents
+	     */
 	    public int numAgents;
-	    public static GeomVectorField agents = new GeomVectorField(WIDTH, HEIGHT);   
+	    
+	    /**
+	     * all agents as a {@link GeomVectorField}.  
+	     */
+	    public static GeomVectorField agents = new GeomVectorField(WIDTH, HEIGHT);
+	    
+	    /**
+	     * the space where agents are allowed to move modeled as a {@link GeomVectorField} 
+	     */
 	    public GeomVectorField movingSpace = new GeomVectorField();
+	    
+	    /**
+	     * obstacles modeled as a {@link GeomVectorField}  
+	     */
 	    public GeomVectorField obstacles = new GeomVectorField();
+	    
+	    /**
+	     * destinations of the agents modeled as a {@link GeomVectorField}
+	     */
 	    public GeomVectorField destinations = new GeomVectorField();
+	    
+	    /**
+	     * starting areas of the agents modeled as a {@link GeomVectorField}
+	     */
 	    public GeomVectorField starts = new GeomVectorField();
+	    
+	    /**
+	     * every tile of the {@link RoomMap} modeled as a {@link GeomVectorField} 
+	     */
 	    public GeomVectorField allTilesOfMap = new GeomVectorField();
+	    
+	    /**
+	     * every display modeled as a {@link GeomVectorField} 
+	     */
 	    public GeomVectorField displays = new GeomVectorField();
 		private Bag allTilesOfDestinations = new Bag();
 		private Bag allTilesOfStarts = new Bag();
@@ -62,11 +122,24 @@ public class Room extends SimState{
 	    private Stadium stadium;
 	    private boolean dynamic;
 	    
+		/**
+		 * The constructor sets: 
+		 * - which geometric data is used
+		 * - if agents see display changes
+		 * - the possibility (0-100) how many agents recognizes those display changes 
+		 * It also generates destination and start tiles to calculate the costs without 
+		 * other influences of the surrounding of an agent. This is done right at the start not only 
+		 * for performance reasons. Also the standard costs for each cell in the surrounding 
+		 * of an agent won't change during the simulation and are equal for all agents.
+		 * Coordinates are here the screen coordinates inside a certain width and height.
+		 * 
+		 * @param seed a random number, see also the MASON-manual
+		 */
 		public Room(long seed) {
 
 			super(seed); 
 			// HIER EINSTELLUNGEN FUER DIE SIMULATION VORNEHMEN!!!!
-			setStadium(Stadium.TESTSMALL);
+			setStadium(Stadium.TESTSMALL); //wählt aus welche Daten genommen werden sollen
 			dynamic = true;  //dynamisch vs. statisch
 			possibility = 50; // Wahrscheinlichkeit, wieviele Agenten die Änderung des Displays mitbekommen 10, 25, 50
 			// -----------------------------------
@@ -82,7 +155,7 @@ public class Room extends SimState{
 	        LOGGER.info("Displayzellen erfolgreich erzeugt");
 	        Tile randomTile = (Tile) allDestinationCenterTiles.get(0);
 	        standardCosts = calcCostsWithoutInfluences(randomTile, OWNCOST);
-	        standardCostsCheck();
+	        standardCostsCheck(); //just to be sure that the calculated values are making sense
 	        if (!(new File(stadium.name() + "-" + STATIC_MAP_TILES_CSV).exists())){
 	        	LOGGER.trace("create static floor field");
 	        	map.createStaticFloorField(allDestinationCenterTiles, stadium);
@@ -90,6 +163,7 @@ public class Room extends SimState{
 	        	map.readStaticFloorField(stadium);
 	        }
 		}
+		
 		private boolean standardCostsCheck() {
 			if (maxMoveRate == 5){
 				CostTile t1 = (CostTile) standardCosts.get(50);
@@ -273,6 +347,10 @@ public class Room extends SimState{
 			}
 	    }
 
+		/**
+		 * Calculates how many tiles fit into the width of the moving space of the agents
+		 * @return the width of the moving space of the agents counted in tiles
+		 */
 		public int getWidthInTiles(){
 			Envelope mbr = movingSpace.getMBR();
 			//stellt sicher dass die Länge der Fläche an tiles min. so gross ist wie die länge
@@ -280,6 +358,10 @@ public class Room extends SimState{
 			int widthinTiles = (int) (Math.ceil(mbr.getWidth()) / TILESIZE); 
 			return widthinTiles;
 		}
+		/**
+		 * Calculates how many tiles fit into the height of the moving space of the agents
+		 * @return the height of the moving space of the agents counted in tiles
+		 */
 		public int getHeightInTiles(){
 			Envelope mbr = movingSpace.getMBR();
 			//stellt sicher dass die Breite der Fläche an tiles min. so gross ist wie die breite
@@ -289,6 +371,14 @@ public class Room extends SimState{
 		}
 		
 
+		/**
+		 * The bag standardCosts has all tiles with their costs in a range of the maxMoveRate of the agents.
+		 * This method returns the cost of a certain tile (targetTile) in this range.
+		 * @param actualPosition the actual position the standard costs should be calculated for
+		 * @param targetTile the target tile for 
+		 * @param costs
+		 * @return the standard costs from the target tile in the surrounding of the actual position
+		 */
 		public int getStandardCostsForTargetTile(Tile actualPosition, Tile targetTile, int costs) {
 			int x = targetTile.getX() - actualPosition.getX();
 			int y = targetTile.getY() - actualPosition.getY();
@@ -314,7 +404,7 @@ public class Room extends SimState{
 	    /**
 	     * @param actualPosition
 	     * @param owncost
-	     * @return {@link ArrayList} CostTile - Elemente die außerhalb der tile-map liegen kommen nicht vor
+	     * @return {@link ArrayList} CostTile - elements which are outside of the {@link RoomMap} are not included
 	     */
 	    private Bag calcCostsWithoutInfluences(Tile actualPosition, int owncost){
 	        Bag bag = new Bag();
@@ -328,7 +418,7 @@ public class Room extends SimState{
 	        			continue;
 	        		} 
 	        		Tile t = getTile(actualPosition.getX()+x, actualPosition.getY()+y);
-	        		//Berechnung von w nach gibbs-marskjös
+	        		//Calculation of w described in the gibbs-marskjös-model (see also my diplom-thesis)
 	        		Geometry actTilePoly = actualPosition.getGeometry();
 	        		Geometry targetTilePoly = t.getGeometry();
 	        		double distance = actTilePoly.getCentroid().distance(targetTilePoly.getCentroid());
@@ -349,9 +439,9 @@ public class Room extends SimState{
 		
 		/**
 		 * gets the tile at position x,y
-		 * @param x 
-		 * @param y
-		 * @return
+		 * @param x position x of the coordinate 
+		 * @param y position y of the coordinate
+		 * @return {@link Tile} the tile at that coordinate
 		 */
 		public Tile getTileByCoord(double x, double y){
 			//da die tiles bei dem minX und minY des MBR anfangen, ist die Position 
@@ -372,6 +462,11 @@ public class Room extends SimState{
 			return map.getTile(tileX, tileY);
 		}
 		
+		/**
+		 * Calculates the screen-coordinate inside the predefined width/height. 
+		 * @param tile the {@link Tile} for which the down left corner coordinate is needed
+		 * @return the calculated {@link Coordinate}
+		 */
 		public Coordinate getCoordForTile(Tile tile){
 			double posX = Math.floor(movingSpace.getMBR().getMinX()) + tile.getX() * TILESIZE;
 			double posY = Math.floor(movingSpace.getMBR().getMinY()) + tile.getY() * TILESIZE;
@@ -379,6 +474,12 @@ public class Room extends SimState{
 			return coord;
 		}
 		
+		/**
+		 * Gets a certain Tile which is at position x,y at the {@link RoomMap}
+		 * @param x  
+		 * @param y
+		 * @return the {@link Tile} at position x,y
+		 */
 		public Tile getTile(int x, int y){
 			if (map.getTile(x, y) == null){
 				System.out.println("index out of bounds - TestRoom - getTile");
@@ -387,6 +488,12 @@ public class Room extends SimState{
 		}	
 
 
+		/**
+		 * @param a an {@link RoomAgent} for which the path shall be calculated
+		 * @param start the start {@link Tile} for the {@link RoomAgent}
+		 * @param end the end {@link Tile} for the {@link RoomAgent}
+		 * @return the {@link Path}
+		 */
 		public Path calcNewPath(RoomAgent a, Tile start, Tile end){
 			int actX = start.getX(), actY = start.getY(); 
 			int destX = end.getX(), destY = end.getY();
@@ -397,13 +504,24 @@ public class Room extends SimState{
 		}
 		
 		// Methoden für UI und main
+		/**
+		 * Returns the number of agents in the simulation
+		 * @return number of agents
+		 */
 		public int getNumAgents(){ 
 	    	return numAgents; 
 	    }
 	    
+	    /**
+	     * Sets the number of agents in the simulation 
+	     * @param a number of agents
+	     */
 	    public void setNumAgents(int a){ 
 	    	if (a > 0) numAgents = a; 
 	    }
+		/* (non-Javadoc)
+		 * @see sim.engine.SimState#start()
+		 */
 		@Override
 	    public void start(){
 	        super.start();
@@ -412,12 +530,12 @@ public class Room extends SimState{
 	        results.setStoppMe(stoppable);
 	        ArrayList<Display> dl = addDisplays();
 	        results.setDisplayList(dl);
-	        //entferne eventuell noch vorhandene Agenten
+	        //clear possible already existing agents
 	        agents.clear(); 
-	        //füge neue Agenten hinzu
+	        //add new agents
 	        LOGGER.info("Instance:{}, Füge Agenten hinzu...",Long.toString(this.seed()));
 	        addAgents();
-	        //setze den minimum bounding rectangle anhand des Bewegungsraums
+	        //set the minimum bounding rectangle to the same size of the moving space of the agents
 	        agents.setMBR(movingSpace.getMBR());
 	    }    
 	    
@@ -427,7 +545,7 @@ public class Room extends SimState{
 			DisplayBag.addAll(allTilesOfDisplays);
 			ArrayList<Display> displList = new ArrayList<Display>();
 			HashMap<Tile, Path> destList = new  HashMap<Tile, Path>();
-			//für alle displaypolygone
+			//for all displaypolygons
 			for (Object object : displays.getGeometries()){
 				Geometry g  = ((MasonGeometry) object).getGeometry();
 				Tile centerTile = getTileByCoord(g.getCentroid().getX(), g.getCentroid().getY());
@@ -440,7 +558,7 @@ public class Room extends SimState{
 		    			DisplayBag.remove(t);
 		    		}
 		    	}
-				// ermittle alle wege zu den zielen
+				// get all ways to the destinations
 				HashMap<Tile, Integer> dests = centerTile.getDestinations();
 				RoomAgent a = new RoomAgent();
 				for (Map.Entry<Tile, Integer> entry : dests.entrySet()){
@@ -467,20 +585,24 @@ public class Room extends SimState{
 	    	return displList;
 		}
 
+		
 		public static void main(String[] args){
 	        doLoop(Room.class, args);
 	        System.exit(0);
 	    }
 
 		/**
-		 * @return the allTilesOfDestinations
+		 * Returns every tile which lie in the destination areas
+		 *  
+		 * @return all {@link Tile} of destinations
 		 */
 		public Bag getAllTilesOfDestinations() {
 			return allTilesOfDestinations;
 		}
 
 		/**
-		 * @return the allDestinationCenterTiles
+		 * Returns every center tile of the destination areas
+		 * @return all destination center tiles
 		 */
 		public Bag getAllDestinationCenterTiles() {
 			return allDestinationCenterTiles;
@@ -498,30 +620,35 @@ public class Room extends SimState{
 		}
 
 		/**
+		 * Returns the maximum move rate of the agents
 		 * @return the maxMoveRate
 		 */
 		public int getMaxMoveRate() {
 			return maxMoveRate;
 		}
 		/**
-		 * @return the dynamic
+		 * Returns, if the simulation is running with dynamic displays (which means agents recognize display changes)
+		 * @return dynamic
 		 */
 		public boolean isDynamic() {
 			return dynamic;
 		}
 		/**
-		 * @param dynamic the dynamic to set
+		 * Defines if the agents recognize display changes 
+		 * @param dynamic true/false 
 		 */
 		public void setDynamic(boolean dynamic) {
 			this.dynamic = dynamic;
 		}
 		/**
+		 * Returns the possibility in percent how possible it is that an agents sees a display change
 		 * @return the possibility
 		 */
 		public int getPossibility() {
 			return possibility;
 		}
 		/**
+		 * Sets the possibility in percent how possible it is that an agents sees a display change
 		 * @param possibility the possibility to set
 		 */
 		public void setPossibility(int possibility) {

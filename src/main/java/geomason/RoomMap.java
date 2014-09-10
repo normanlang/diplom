@@ -26,6 +26,12 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LinearRing;
 import com.vividsolutions.jts.geom.Polygon;
 
+/**
+ * @author Norman Langner
+ * This class constructs the static floor field in form of tiles and saves it into a
+ * file to prevent recalculation for every new simulation start. 
+ *
+ */
 public class RoomMap implements TileBasedMap{
 
 	public static final String STATIC_MAP_TILES_CSV = "static-map_tiles.csv";
@@ -42,6 +48,10 @@ public class RoomMap implements TileBasedMap{
 
 	private boolean append = true;
 
+	/**
+	 * The constructor builds all the tiles of the {@link RoomMap}  
+	 * @param state
+	 */
 	public RoomMap(Room state){
 		room = state;
 		width = room.getWidthInTiles();

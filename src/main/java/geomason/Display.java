@@ -19,12 +19,14 @@ import sim.util.geo.MasonGeometry;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
-
+/**
+ * @author Norman Langner
+ * This class models a display. It implements a MASON-{@link Steppable}. In every simulation step its step()-method is called.  
+ *
+ */
 public class Display extends MasonGeometry implements Steppable {
 
-	/**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 7269345727875001691L;
 	private static final Logger LOGGER = LoggerFactory.getLogger(Display.class);
 	private ArrayList<Display> displayList = new ArrayList<Display>();
@@ -153,6 +155,11 @@ public class Display extends MasonGeometry implements Steppable {
 		}
 		return null;
 	}
+	/**
+	 * calculates the shortest path to one of the destination files avoiding the danger areas
+	 * @param state the simulation state {@link SimState}
+	 * @return the new destination {@link Tile}
+	 */
 	private Tile setNewDestination(SimState state){
 		Tile newDest = null;
 		int length = Integer.MAX_VALUE;
@@ -227,6 +234,7 @@ public class Display extends MasonGeometry implements Steppable {
 	}
 
 	/**
+	 * A display knows all other displays. This method gets this displays displaylist (where all others are stored)
 	 * @return the displayList
 	 */
 	public ArrayList<Display> getDisplayList() {
@@ -234,6 +242,7 @@ public class Display extends MasonGeometry implements Steppable {
 	}
 
 	/**
+	 * A display knows all other displays. This method sets the display list. 
 	 * @param displayList
 	 *            the displayList to set
 	 */
@@ -242,6 +251,8 @@ public class Display extends MasonGeometry implements Steppable {
 	}
 
 	/**
+	 * Sets the {@link Stoppable}. This is needed for the observer to stop the displays at simulation end.
+	 * Otherwise the simulation would run infinitly because it is still in the schedule.
 	 * @param stoppMe
 	 *            the stoppMe to set
 	 */
