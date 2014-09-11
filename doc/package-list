@@ -1,0 +1,4 @@
+examples
+geomason
+org.newdawn.slick.util.pathfinding
+org.newdawn.slick.util.pathfinding.heuristics
